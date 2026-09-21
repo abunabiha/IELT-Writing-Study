@@ -11,6 +11,7 @@ import WritingGrammarLiteracy from './components/literacy/WritingGrammarLiteracy
 import Task1ChartLab from './components/simulator/Task1ChartLab';
 import GeneralTrainingLetterLab from './components/simulator/GeneralTrainingLetterLab';
 import Task2EssayBuilder from './components/simulator/Task2EssayBuilder';
+import GradeBook from './components/analytics/GradeBook';
 import BandCalculatorModal from './components/analytics/BandCalculatorModal';
 import SettingsModal from './components/settings/SettingsModal';
 import { soundFx } from './utils/soundEffects';
@@ -139,6 +140,18 @@ export default function App() {
         {activeTab === 'writingLiteracy' && (
           <WritingGrammarLiteracy
             onAddXp={handleAddXp}
+          />
+        )}
+
+        {/* TAB: GradeBook (Buku Nilai & Rapor Siswa) */}
+        {activeTab === 'gradeBook' && (
+          <GradeBook
+            xp={xp}
+            streak={streak}
+            level={Math.floor(xp / 500) + 1}
+            levelTitle="Academic Aspirant"
+            completedDrills={completedDrills}
+            onNavigateTab={setActiveTab}
           />
         )}
 

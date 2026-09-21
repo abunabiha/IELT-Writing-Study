@@ -58,6 +58,15 @@ export default function Navbar({
           highlight: true
         },
         {
+          id: 'gradeBook',
+          name: 'Buku Nilai & Rapor Siswa',
+          shortName: 'GradeBook',
+          icon: '📋',
+          badge: 'Rapor Siswa',
+          desc: 'Transkrip nilai diagnostik 4 pilar IELTS, evaluasi WPM, dan progres belajar',
+          highlight: true
+        },
+        {
           id: 'skillTree',
           name: 'Skill Tree Roadmap',
           shortName: 'Skill Tree',
