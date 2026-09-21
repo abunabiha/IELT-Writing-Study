@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Puzzle, Sparkles, CheckCircle2, RotateCcw, ArrowRight, 
   BookOpen, HelpCircle, Star, ArrowUpRight, Volume2, Layers,
-  ChevronRight, Trophy, Zap, Check
+  ChevronRight, Trophy, Zap, Check, Keyboard, Flame, RefreshCw,
+  Target, Award
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PUZZLE_BAND_TIERS, BEGINNER_PUZZLE_LEVELS, BEGINNER_VOCAB_UPGRADES } from '../../data/beginnerLessonsData';
@@ -17,10 +18,33 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
   const [showVocabDrawer, setShowVocabDrawer] = useState(false);
   const [completedLevels, setCompletedLevels] = useState({});
 
+  // Active Stage: 'puzzle' (Susun Balok) | 'typing' (Ketik Kinetik)
+  const [activeStage, setActiveStage] = useState('puzzle');
+
+  // Typing State
+  const [typedText, setTypedText] = useState('');
+  const [typingTargetMode, setTypingTargetMode] = useState('standard'); // 'standard' | 'powerup'
+  const [typingStartTime, setTypingStartTime] = useState(null);
+  const [isTypingCompleted, setIsTypingCompleted] = useState(false);
+  const [completedTypingLevels, setCompletedTypingLevels] = useState({});
+  const typingInputRef = useRef(null);
+
   // Get active tier and active puzzles
   const activeTier = PUZZLE_BAND_TIERS.find(t => t.id === selectedBand) || PUZZLE_BAND_TIERS[0];
   const bandPuzzles = BEGINNER_PUZZLE_LEVELS.filter(l => l.bandTier === selectedBand);
   const currentLevel = bandPuzzles[levelIdx] || bandPuzzles[0] || BEGINNER_PUZZLE_LEVELS[0];
+
+  // Target sentence for typing
+  const currentTargetSentence = typingTargetMode === 'powerup' && currentLevel.powerUpBand8?.upgraded
+    ? currentLevel.powerUpBand8.upgraded
+    : currentLevel.completedEnglish;
+
+  // Reset typing state whenever level or band changes
+  const resetTypingState = () => {
+    setTypedText('');
+    setTypingStartTime(null);
+    setIsTypingCompleted(false);
+  };
 
   const handleSelectBand = (bandId) => {
     soundFx.playClick();
@@ -29,6 +53,8 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
     setPlacedBlockIds([]);
     setIsSuccess(false);
     setShowPowerUp(false);
+    setActiveStage('puzzle');
+    resetTypingState();
   };
 
   const handleSelectBlock = (blockId) => {
@@ -63,6 +89,7 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
     setPlacedBlockIds([]);
     setIsSuccess(false);
     setShowPowerUp(false);
+    resetTypingState();
   };
 
   const handleNextLevel = () => {
@@ -70,6 +97,9 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
     setPlacedBlockIds([]);
     setIsSuccess(false);
     setShowPowerUp(false);
+    setActiveStage('puzzle');
+    resetTypingState();
+
     if (levelIdx + 1 < bandPuzzles.length) {
       setLevelIdx(prev => prev + 1);
     } else {
@@ -90,6 +120,8 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
     setPlacedBlockIds([]);
     setIsSuccess(false);
     setShowPowerUp(false);
+    setActiveStage('puzzle');
+    resetTypingState();
   };
 
   const handleSpeak = (text) => {
@@ -103,6 +135,56 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
       window.speechSynthesis.speak(utterance);
     }
   };
+
+  // Switch to typing stage
+  const handleOpenTypingStage = (mode = 'standard') => {
+    soundFx.playClick();
+    setTypingTargetMode(mode);
+    setActiveStage('typing');
+    resetTypingState();
+    setTimeout(() => {
+      if (typingInputRef.current) {
+        typingInputRef.current.focus();
+      }
+    }, 150);
+  };
+
+  // Handle typing input change
+  const handleTypingChange = (e) => {
+    const val = e.target.value;
+    if (!typingStartTime && val.length > 0) {
+      setTypingStartTime(Date.now());
+    }
+    setTypedText(val);
+
+    // Play subtle typing sound
+    soundFx.playClick();
+
+    // Check completion
+    if (val === currentTargetSentence && !isTypingCompleted) {
+      setIsTypingCompleted(true);
+      soundFx.playLevelUp();
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.6 } });
+      setCompletedTypingLevels(prev => ({ ...prev, [currentLevel.id]: true }));
+      if (onAddXp) onAddXp(40);
+    }
+  };
+
+  // Calculate live typing metrics
+  const typingTargetLength = currentTargetSentence.length;
+  const typedLength = typedText.length;
+  let correctCharsCount = 0;
+  for (let i = 0; i < typedLength; i++) {
+    if (typedText[i] === currentTargetSentence[i]) {
+      correctCharsCount++;
+    }
+  }
+  const accuracy = typedLength > 0 ? Math.round((correctCharsCount / typedLength) * 100) : 100;
+  
+  // WPM
+  const timeElapsedMin = typingStartTime ? (Date.now() - typingStartTime) / 60000 : 0;
+  const wordsTyped = typedText.trim().split(/\s+/).filter(Boolean).length;
+  const wpm = timeElapsedMin > 0 ? Math.round(wordsTyped / timeElapsedMin) : 0;
 
   const isComplete = placedBlockIds.length === currentLevel.blocks.length;
   const isCorrectOrder = isComplete && placedBlockIds.every((id, idx) => id === currentLevel.correctOrder[idx]);
@@ -118,14 +200,14 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
               <Puzzle className="w-5 h-5" />
             </span>
             <div className="flex items-center gap-2">
-              <h2 className="text-xl font-bold text-white">Puzzle Balok Kata (Sentence Puzzle Arena)</h2>
+              <h2 className="text-xl font-bold text-white">Puzzle Balok Kata & Arena Ketik Kinetik</h2>
               <span className="px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 text-[10px] font-extrabold border border-indigo-500/30">
                 120 Latihan (30 / Band)
               </span>
             </div>
           </div>
           <p className="text-slate-400 text-xs sm:text-sm mt-1">
-            Susun balok-balok kata seperti kepingan Lego dari kalimat sederhana (S-V-O) hingga sintaksis mahir Band 8.5+.
+            Susun balok kata lalu ketik ulang langsung melalui keyboard untuk memperkuat memori otot motorik tangan (*kinesthetic memory*).
           </p>
         </div>
 
@@ -213,11 +295,11 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
       {/* Active Puzzle Playground Card */}
       <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 sm:p-8 space-y-6 shadow-2xl">
         
-        {/* Top Header: Topic, Level Picker & Progress Bar */}
+        {/* Top Header: Topic, Level Picker & Stage Selector */}
         <div className="space-y-3">
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-4">
-            <div>
-              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold mr-2">
+            <div className="flex items-center gap-2">
+              <span className="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 text-xs font-bold">
                 {activeTier.label.split('(')[0]}
               </span>
               <span className="text-xs text-slate-400">
@@ -247,11 +329,12 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
             {bandPuzzles.map((p, i) => {
               const isCurr = i === levelIdx;
               const isDone = completedLevels[p.id];
+              const isTyped = completedTypingLevels[p.id];
               return (
                 <button
                   key={p.id}
                   onClick={() => handleJumpLevel(i)}
-                  className={`w-8 h-8 rounded-xl flex-shrink-0 text-xs font-bold font-mono transition-all flex items-center justify-center ${
+                  className={`w-8 h-8 rounded-xl flex-shrink-0 text-xs font-bold font-mono transition-all flex items-center justify-center relative ${
                     isCurr
                       ? 'bg-indigo-600 text-white ring-2 ring-indigo-400 shadow-md scale-105'
                       : isDone
@@ -260,13 +343,48 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
                   }`}
                   title={`Contoh ${i + 1}: ${p.title}`}
                 >
-                  {i + 1}
+                  <span>{i + 1}</span>
+                  {isTyped && (
+                    <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-cyan-400 rounded-full ring-2 ring-slate-900" title="Ketik Selesai" />
+                  )}
                 </button>
               );
             })}
           </div>
 
-          <h3 className="text-lg sm:text-xl font-extrabold text-white pt-2">
+          {/* STAGE SELECTOR (1. Susun Balok vs 2. Ketik Kinetik) */}
+          <div className="flex items-center gap-2 p-1.5 bg-slate-950 border border-slate-800 rounded-2xl">
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                setActiveStage('puzzle');
+              }}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition ${
+                activeStage === 'puzzle'
+                  ? 'bg-indigo-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Puzzle className="w-4 h-4" />
+              <span>1. Susun Balok Kata</span>
+              {isSuccess && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 ml-1" />}
+            </button>
+
+            <button
+              onClick={() => handleOpenTypingStage('standard')}
+              className={`flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition ${
+                activeStage === 'typing'
+                  ? 'bg-cyan-600 text-white shadow'
+                  : 'text-slate-400 hover:text-slate-200'
+              }`}
+            >
+              <Keyboard className="w-4 h-4" />
+              <span>2. Ketik Kinetik di Tangan</span>
+              {isTypingCompleted && <CheckCircle2 className="w-3.5 h-3.5 text-emerald-300 ml-1" />}
+            </button>
+          </div>
+
+          <h3 className="text-lg sm:text-xl font-extrabold text-white pt-1">
             {currentLevel.title}
           </h3>
 
@@ -286,182 +404,425 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
           </p>
         </div>
 
-        {/* Puzzle Assembly Slot (Area Penyusunan Balok) */}
-        <div className="space-y-2">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
-            <span>Area Susunan Kalimat Anda (Klik balok untuk mengeluarkannya):</span>
-            <button
-              onClick={handleReset}
-              className="text-slate-400 hover:text-slate-200 text-xs flex items-center gap-1.5 transition px-2.5 py-1 rounded-lg hover:bg-slate-800"
-            >
-              <RotateCcw className="w-3 h-3" />
-              <span>Reset Susunan</span>
-            </button>
-          </div>
-
-          <div className="min-h-24 p-4 sm:p-5 rounded-2xl bg-slate-950 border-2 border-dashed border-slate-800 flex flex-wrap items-center gap-3">
-            {placedBlockIds.length === 0 && (
-              <span className="text-xs sm:text-sm text-slate-500 italic">
-                Klik balok-balok kata di bawah secara berurutan untuk menyusun kalimat...
-              </span>
-            )}
-
-            {placedBlockIds.map((id) => {
-              const blk = currentLevel.blocks.find(b => b.id === id);
-              if (!blk) return null;
-              return (
+        {/* ========================================================================= */}
+        {/* STAGE 1: PUZZLE ASSEMBLY (SUSUN BALOK KATA) */}
+        {/* ========================================================================= */}
+        {activeStage === 'puzzle' && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Puzzle Assembly Slot (Area Penyusunan Balok) */}
+            <div className="space-y-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center justify-between">
+                <span>Area Susunan Kalimat Anda (Klik balok untuk mengeluarkannya):</span>
                 <button
-                  key={id}
-                  onClick={() => handleRemoveBlock(id)}
-                  className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs sm:text-sm shadow-lg hover:scale-95 transition-all flex flex-col items-start border border-indigo-400/40 active:scale-90"
+                  onClick={handleReset}
+                  className="text-slate-400 hover:text-slate-200 text-xs flex items-center gap-1.5 transition px-2.5 py-1 rounded-lg hover:bg-slate-800"
                 >
-                  <span className="text-white text-sm">{blk.text}</span>
-                  <span className="text-[10px] text-indigo-200 font-normal mt-0.5">{blk.translation}</span>
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Reset Susunan</span>
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Available Word Blocks to Pick */}
-        <div className="space-y-2">
-          <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Pilihan Balok Kata Tersedia:
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            {currentLevel.blocks.map((blk) => {
-              const isUsed = placedBlockIds.includes(blk.id);
-              return (
-                <button
-                  key={blk.id}
-                  disabled={isUsed || isSuccess}
-                  onClick={() => handleSelectBlock(blk.id)}
-                  className={`px-4 py-3 rounded-2xl border text-left transition-all flex flex-col items-start ${
-                    isUsed
-                      ? 'bg-slate-950 border-slate-900 text-slate-700 cursor-not-allowed opacity-25'
-                      : 'bg-slate-800/80 border-slate-700 text-slate-200 hover:border-indigo-400 hover:bg-slate-800 shadow-md active:scale-95'
-                  }`}
-                >
-                  <span className="font-bold text-xs sm:text-sm text-slate-100">{blk.text}</span>
-                  <span className="text-[11px] text-slate-400 mt-0.5">{blk.translation}</span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Feedback & Result */}
-        {isComplete && (
-          <div className="space-y-4 pt-2 border-t border-slate-800 animate-fadeIn">
-            {isCorrectOrder ? (
-              <div className="p-5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2 text-emerald-300 font-bold text-sm">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span>Hebat! Susunan Kalimat Anda 100% Tepat!</span>
-                  </div>
-                  <button
-                    onClick={() => handleSpeak(currentLevel.completedEnglish)}
-                    className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition flex items-center gap-1.5 text-xs font-bold"
-                    title="Dengarkan Pengucapan Asli"
-                  >
-                    <Volume2 className="w-4 h-4" />
-                    <span>Audio</span>
-                  </button>
-                </div>
-                <p className="text-sm sm:text-base text-slate-100 font-medium italic">
-                  "{currentLevel.completedEnglish}"
-                </p>
-                <div className="text-xs text-emerald-400 font-semibold">
-                  +60 XP Diperoleh!
-                </div>
               </div>
-            ) : (
-              <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/40 space-y-2">
-                <div className="text-rose-300 font-bold text-sm">
-                  Urutan masih belum pas. Coba perhatikan tips di atas dan klik balok untuk menukar posisinya.
-                </div>
+
+              <div className="min-h-24 p-4 sm:p-5 rounded-2xl bg-slate-950 border-2 border-dashed border-slate-800 flex flex-wrap items-center gap-3">
+                {placedBlockIds.length === 0 && (
+                  <span className="text-xs sm:text-sm text-slate-500 italic">
+                    Klik balok-balok kata di bawah secara berurutan untuk menyusun kalimat...
+                  </span>
+                )}
+
+                {placedBlockIds.map((id) => {
+                  const blk = currentLevel.blocks.find(b => b.id === id);
+                  if (!blk) return null;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => handleRemoveBlock(id)}
+                      className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 text-white font-bold text-xs sm:text-sm shadow-lg hover:scale-95 transition-all flex flex-col items-start border border-indigo-400/40 active:scale-90"
+                    >
+                      <span className="text-white text-sm">{blk.text}</span>
+                      <span className="text-[10px] text-indigo-200 font-normal mt-0.5">{blk.translation}</span>
+                    </button>
+                  );
+                })}
               </div>
-            )}
+            </div>
 
-            {/* BAND 8 POWER-UP BUTTON */}
-            {isCorrectOrder && currentLevel.powerUpBand8 && (
-              <div className="space-y-3">
-                {!showPowerUp ? (
-                  <button
-                    onClick={() => {
-                      soundFx.playStreak();
-                      setShowPowerUp(true);
-                      confetti({ particleCount: 50, spread: 50 });
-                    }}
-                    className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 transition"
-                  >
-                    <Sparkles className="w-4 h-4 text-amber-200 fill-amber-200" />
-                    <span>Lihat Cara Meng-upgrade Kalimat Ini Menjadi Band 8.5+! 🚀</span>
-                  </button>
-                ) : (
-                  <div className="p-5 sm:p-6 rounded-3xl bg-slate-950 border border-amber-500/40 space-y-3 animate-fadeIn">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
-                        {currentLevel.bandLabel}
-                      </span>
-                      <span className="text-slate-500">➔</span>
-                      <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
-                        Band 8.5+ (Scholastic Academic Diction)
-                      </span>
-                    </div>
+            {/* Available Word Blocks to Pick */}
+            <div className="space-y-2">
+              <div className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                Pilihan Balok Kata Tersedia:
+              </div>
 
-                    <div className="space-y-1.5 pt-1">
-                      <div className="text-xs text-slate-400 line-through">
-                        "{currentLevel.powerUpBand8.original}"
+              <div className="flex flex-wrap gap-3">
+                {currentLevel.blocks.map((blk) => {
+                  const isUsed = placedBlockIds.includes(blk.id);
+                  return (
+                    <button
+                      key={blk.id}
+                      disabled={isUsed || isSuccess}
+                      onClick={() => handleSelectBlock(blk.id)}
+                      className={`px-4 py-3 rounded-2xl border text-left transition-all flex flex-col items-start ${
+                        isUsed
+                          ? 'bg-slate-950 border-slate-900 text-slate-700 cursor-not-allowed opacity-25'
+                          : 'bg-slate-800/80 border-slate-700 text-slate-200 hover:border-indigo-400 hover:bg-slate-800 shadow-md active:scale-95'
+                      }`}
+                    >
+                      <span className="font-bold text-xs sm:text-sm text-slate-100">{blk.text}</span>
+                      <span className="text-[11px] text-slate-400 mt-0.5">{blk.translation}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Feedback & Result */}
+            {isComplete && (
+              <div className="space-y-4 pt-2 border-t border-slate-800 animate-fadeIn">
+                {isCorrectOrder ? (
+                  <div className="p-5 rounded-2xl bg-emerald-950/40 border border-emerald-500/40 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 text-emerald-300 font-bold text-sm">
+                        <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                        <span>Hebat! Susunan Kalimat Anda 100% Tepat! (+60 XP)</span>
                       </div>
-                      <div className="text-sm sm:text-base font-bold text-amber-200 flex items-center justify-between">
-                        <span>"{currentLevel.powerUpBand8.upgraded}"</span>
+                      <button
+                        onClick={() => handleSpeak(currentLevel.completedEnglish)}
+                        className="p-2 rounded-xl bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30 transition flex items-center gap-1.5 text-xs font-bold"
+                        title="Dengarkan Pengucapan Asli"
+                      >
+                        <Volume2 className="w-4 h-4" />
+                        <span>Audio</span>
+                      </button>
+                    </div>
+                    <p className="text-sm sm:text-base text-slate-100 font-medium italic">
+                      "{currentLevel.completedEnglish}"
+                    </p>
+
+                    {/* Prominent CTA to Stage 2: Kinesthetic Typing */}
+                    <div className="p-4 rounded-xl bg-cyan-950/60 border border-cyan-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div>
+                        <span className="text-xs font-bold text-cyan-300 uppercase tracking-wider flex items-center gap-1.5">
+                          <Keyboard className="w-4 h-4 text-cyan-400" />
+                          <span>Lanjutkan ke Tahap 2: Mengetik Kinetik</span>
+                        </span>
+                        <p className="text-xs text-slate-300 mt-0.5">
+                          Ketik kalimat yang baru saja Anda susun ke keyboard untuk mengunci pola sintaksis ke memori motorik tangan!
+                        </p>
+                      </div>
+
+                      <div className="flex items-center gap-2">
                         <button
-                          onClick={() => handleSpeak(currentLevel.powerUpBand8.upgraded)}
-                          className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 ml-2 flex-shrink-0"
-                          title="Dengarkan Pengucapan Band 8"
+                          onClick={() => handleOpenTypingStage('standard')}
+                          className="px-4 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg shadow-cyan-600/30 transition whitespace-nowrap"
                         >
-                          <Volume2 className="w-4 h-4" />
+                          <Keyboard className="w-3.5 h-3.5" />
+                          <span>Ketik Kalimat Ini</span>
                         </button>
+                        {currentLevel.powerUpBand8 && (
+                          <button
+                            onClick={() => handleOpenTypingStage('powerup')}
+                            className="px-4 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-indigo-600 hover:opacity-95 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg transition whitespace-nowrap"
+                          >
+                            <Sparkles className="w-3.5 h-3.5 text-amber-200" />
+                            <span>Tantangan Band 8+</span>
+                          </button>
+                        )}
                       </div>
                     </div>
-
-                    <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
-                      💡 <b>Mengapa ini dinilai Band 8.5+?</b> {currentLevel.powerUpBand8.explanation}
+                  </div>
+                ) : (
+                  <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/40 space-y-2">
+                    <div className="text-rose-300 font-bold text-sm">
+                      Urutan masih belum pas. Coba perhatikan tips di atas dan klik balok untuk menukar posisinya.
                     </div>
                   </div>
                 )}
+
+                {/* BAND 8 POWER-UP CARD */}
+                {isCorrectOrder && currentLevel.powerUpBand8 && (
+                  <div className="space-y-3">
+                    {!showPowerUp ? (
+                      <button
+                        onClick={() => {
+                          soundFx.playStreak();
+                          setShowPowerUp(true);
+                          confetti({ particleCount: 50, spread: 50 });
+                        }}
+                        className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-500 via-rose-500 to-indigo-600 hover:opacity-95 text-white font-extrabold text-xs sm:text-sm shadow-xl flex items-center justify-center gap-2 transition"
+                      >
+                        <Sparkles className="w-4 h-4 text-amber-200 fill-amber-200" />
+                        <span>Lihat Cara Meng-upgrade Kalimat Ini Menjadi Band 8.5+! 🚀</span>
+                      </button>
+                    ) : (
+                      <div className="p-5 sm:p-6 rounded-3xl bg-slate-950 border border-amber-500/40 space-y-3 animate-fadeIn">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+                            {currentLevel.bandLabel}
+                          </span>
+                          <span className="text-slate-500">➔</span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30">
+                            Band 8.5+ (Scholastic Academic Diction)
+                          </span>
+                        </div>
+
+                        <div className="space-y-1.5 pt-1">
+                          <div className="text-xs text-slate-400 line-through">
+                            "{currentLevel.powerUpBand8.original}"
+                          </div>
+                          <div className="text-sm sm:text-base font-bold text-amber-200 flex items-center justify-between">
+                            <span>"{currentLevel.powerUpBand8.upgraded}"</span>
+                            <button
+                              onClick={() => handleSpeak(currentLevel.powerUpBand8.upgraded)}
+                              className="p-1.5 rounded-lg bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 ml-2 flex-shrink-0"
+                              title="Dengarkan Pengucapan Band 8"
+                            >
+                              <Volume2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="p-3.5 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                          💡 <b>Mengapa ini dinilai Band 8.5+?</b> {currentLevel.powerUpBand8.explanation}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Next Level Controls */}
+            {isSuccess && (
+              <div className="flex justify-between items-center pt-3 border-t border-slate-800">
+                <button
+                  onClick={() => handleOpenTypingStage('standard')}
+                  className="px-5 py-2.5 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white font-bold text-xs flex items-center gap-2 transition"
+                >
+                  <Keyboard className="w-4 h-4" />
+                  <span>Ketik Kalimat Ini</span>
+                </button>
+
+                <button
+                  onClick={handleNextLevel}
+                  className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-indigo-600/30 flex items-center gap-2 transition"
+                >
+                  <span>Latihan Selanjutnya (Contoh {((levelIdx + 1) % 30) + 1})</span>
+                  <ArrowRight className="w-4 h-4" />
+                </button>
               </div>
             )}
           </div>
         )}
 
-        {/* Action Controls */}
-        {isSuccess && (
-          <div className="flex justify-end pt-3">
-            <button
-              onClick={handleNextLevel}
-              className="px-6 py-3 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm shadow-xl shadow-indigo-600/30 flex items-center gap-2 transition"
-            >
-              <span>Latihan Selanjutnya (Contoh {((levelIdx + 1) % 30) + 1})</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
+        {/* ========================================================================= */}
+        {/* STAGE 2: KINESTHETIC MUSCLE MEMORY TYPING (MENGETIK LANGSUNG DI TANGAN) */}
+        {/* ========================================================================= */}
+        {activeStage === 'typing' && (
+          <div className="space-y-6 animate-fadeIn">
+            {/* Typing Mode Selector (Standard vs Band 8 Upgrade) */}
+            <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-2xl bg-slate-950 border border-slate-800">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-400">Pilih Target Ketik:</span>
+                <button
+                  onClick={() => {
+                    soundFx.playClick();
+                    setTypingTargetMode('standard');
+                    resetTypingState();
+                  }}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition ${
+                    typingTargetMode === 'standard'
+                      ? 'bg-cyan-600 text-white shadow'
+                      : 'bg-slate-900 text-slate-400 hover:text-white'
+                  }`}
+                >
+                  Kalimat Susunan Standar
+                </button>
+                {currentLevel.powerUpBand8 && (
+                  <button
+                    onClick={() => {
+                      soundFx.playClick();
+                      setTypingTargetMode('powerup');
+                      resetTypingState();
+                    }}
+                    className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                      typingTargetMode === 'powerup'
+                        ? 'bg-gradient-to-r from-amber-500 to-purple-600 text-white shadow'
+                        : 'bg-slate-900 text-slate-400 hover:text-white'
+                    }`}
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                    <span>Tantangan Mahir Band 8.5+</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Live Typing Metrics */}
+              <div className="flex items-center gap-4 text-xs font-mono">
+                <div className="text-slate-400">
+                  Akurasi: <span className={`font-bold ${accuracy >= 90 ? 'text-emerald-400' : 'text-amber-400'}`}>{accuracy}%</span>
+                </div>
+                <div className="text-slate-400">
+                  Kecepatan: <span className="font-bold text-indigo-400">{wpm} WPM</span>
+                </div>
+                <div className="text-slate-400">
+                  Karakter: <span className="font-bold text-white">{typedLength}/{typingTargetLength}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Target Sentence Display with Live Visual Highlight */}
+            <div className="p-5 sm:p-6 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+              <div className="flex items-center justify-between text-xs text-slate-400">
+                <span className="font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <Keyboard className="w-3.5 h-3.5" />
+                  Target Ketik Kinetik:
+                </span>
+                <button
+                  onClick={() => handleSpeak(currentTargetSentence)}
+                  className="p-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-300 flex items-center gap-1 text-xs"
+                >
+                  <Volume2 className="w-3.5 h-3.5 text-cyan-400" />
+                  <span>Dengarkan</span>
+                </button>
+              </div>
+
+              {/* Character by character render */}
+              <div className="text-base sm:text-lg font-mono leading-relaxed tracking-wide select-none p-4 rounded-xl bg-slate-900/80 border border-slate-800/80">
+                {currentTargetSentence.split('').map((char, index) => {
+                  let charClass = 'text-slate-500';
+                  const isCurrent = index === typedLength;
+
+                  if (index < typedLength) {
+                    if (typedText[index] === char) {
+                      charClass = 'text-emerald-400 font-bold';
+                    } else {
+                      charClass = 'text-rose-400 bg-rose-950/80 underline font-bold';
+                    }
+                  }
+
+                  return (
+                    <span 
+                      key={index} 
+                      className={`${charClass} ${isCurrent ? 'border-b-2 border-cyan-400 bg-cyan-500/20 animate-pulse' : ''}`}
+                    >
+                      {char}
+                    </span>
+                  );
+                })}
+              </div>
+
+              <div className="text-xs text-slate-400 italic">
+                🇮🇩 <strong>Arti:</strong> "{currentLevel.indonesianGoal}"
+              </div>
+            </div>
+
+            {/* Active Typing Input Field */}
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs">
+                <label className="text-slate-400 font-bold">
+                  Ketik Kalimat Di Sini (Sistem akan memverifikasi secara langsung):
+                </label>
+                <button
+                  onClick={resetTypingState}
+                  className="text-slate-400 hover:text-slate-200 flex items-center gap-1 text-xs"
+                >
+                  <RotateCcw className="w-3 h-3" />
+                  <span>Hapus / Ulangi</span>
+                </button>
+              </div>
+
+              <textarea
+                ref={typingInputRef}
+                rows="3"
+                value={typedText}
+                onChange={handleTypingChange}
+                disabled={isTypingCompleted}
+                placeholder="Mulai ketik kalimat persis seperti target di atas..."
+                className={`w-full p-4 rounded-2xl bg-slate-950 border text-sm sm:text-base font-mono leading-relaxed text-white focus:outline-none transition ${
+                  isTypingCompleted
+                    ? 'border-emerald-500 bg-emerald-950/20'
+                    : accuracy < 90
+                    ? 'border-amber-500 focus:border-amber-400'
+                    : 'border-slate-700 focus:border-cyan-500'
+                }`}
+              />
+            </div>
+
+            {/* Typing Completed Card */}
+            {isTypingCompleted && (
+              <div className="p-5 rounded-2xl bg-gradient-to-r from-emerald-950/40 via-cyan-950/40 to-slate-950 border border-emerald-500/40 space-y-3 animate-fadeIn">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-emerald-300 font-bold text-sm">
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                    <span>Luar Biasa! Memori Otot Kinetik Terbentuk Sempurna!</span>
+                  </div>
+                  <span className="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-bold border border-emerald-500/30">
+                    +40 XP Bonus
+                  </span>
+                </div>
+                <p className="text-xs text-slate-300 leading-relaxed">
+                  Mengetik ulang secara langsung terbukti menanamkan struktur kalimat ke dalam refleks motorik bawah sadar, sehingga Anda dapat menulis esai secara cepat dan bebas kesalahan di hari ujian resmi.
+                </p>
+
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => {
+                        soundFx.playClick();
+                        setActiveStage('puzzle');
+                      }}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition"
+                    >
+                      <Puzzle className="w-3.5 h-3.5" />
+                      <span>Kembali ke Balok</span>
+                    </button>
+                    <button
+                      onClick={resetTypingState}
+                      className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-cyan-300 text-xs font-bold flex items-center gap-1.5 transition"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" />
+                      <span>Ketik Ulang</span>
+                    </button>
+                  </div>
+
+                  <button
+                    onClick={handleNextLevel}
+                    className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold flex items-center gap-2 shadow-lg shadow-indigo-600/30 transition"
+                  >
+                    <span>Latihan Selanjutnya (Contoh {((levelIdx + 1) % 30) + 1})</span>
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Back to Puzzle button if not completed */}
+            {!isTypingCompleted && (
+              <div className="flex justify-between items-center pt-2">
+                <button
+                  onClick={() => {
+                    soundFx.playClick();
+                    setActiveStage('puzzle');
+                  }}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition"
+                >
+                  <Puzzle className="w-3.5 h-3.5" />
+                  <span>Kembali ke Susunan Balok</span>
+                </button>
+
+                <button
+                  onClick={handleNextLevel}
+                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition"
+                >
+                  <span>Lewati ke Latihan Berikutnya</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            )}
+
           </div>
         )}
 
       </div>
     </div>
-  );
-}
-
-function Target(props) {
-  return (
-    <svg {...props} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <circle cx="12" cy="12" r="10" />
-      <circle cx="12" cy="12" r="6" />
-      <circle cx="12" cy="12" r="2" />
-    </svg>
   );
 }

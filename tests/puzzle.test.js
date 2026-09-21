@@ -51,3 +51,16 @@ test('PUZZLE_BAND_TIERS configuration covers all 4 target bands', () => {
     assert.ok(tier.desc && tier.color, 'Tier must have description and color');
   }
 });
+
+test('Every puzzle item provides valid completedEnglish and Band 8 sentences for kinesthetic typing practice', () => {
+  for (const item of BEGINNER_PUZZLE_LEVELS) {
+    // Standard typing sentence
+    assert.ok(typeof item.completedEnglish === 'string', `Item ${item.id} completedEnglish must be a string`);
+    assert.ok(item.completedEnglish.trim().length > 10, `Item ${item.id} typing target must be at least 10 chars`);
+    assert.ok(/[.?!]$/.test(item.completedEnglish.trim()), `Item ${item.id} typing target must end with punctuation`);
+
+    // Band 8.5+ upgraded typing sentence
+    assert.ok(typeof item.powerUpBand8.upgraded === 'string', `Item ${item.id} upgraded sentence must be a string`);
+    assert.ok(item.powerUpBand8.upgraded.trim().length > 15, `Item ${item.id} upgraded typing target must be at least 15 chars`);
+  }
+});
