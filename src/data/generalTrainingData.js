@@ -14,6 +14,11 @@ In your letter:
 • Give details of your flight (flight number, date, destination)
 • Describe what happened to your luggage and the damage caused
 • Explain what action you expect the airline to take`,
+    promptTranslation: `Anda baru-baru ini bepergian dengan pesawat dan koper bagasi Anda rusak selama penerbangan. Tulis surat kepada manajer maskapai penerbangan.
+Dalam surat Anda:
+• Berikan rincian penerbangan Anda (nomor penerbangan, tanggal, tujuan)
+• Jelaskan apa yang terjadi pada bagasi Anda dan kerusakan yang ditimbulkan
+• Jelaskan tindakan apa yang Anda harapkan diambil oleh pihak maskapai`,
     modelAnswerBand8: `Dear Sir or Madam,
 
 I am writing to officially register a complaint regarding severe damage sustained by my luggage during a recent flight with your airline, and to request appropriate financial compensation.
@@ -27,6 +32,20 @@ Therefore, I request that your customer service department reimburses the cost o
 I look forward to hearing from you at your earliest convenience.
 
 Yours faithfully,
+Imam Asrowardi`,
+    modelAnswerTranslation: `Kepada Bapak atau Ibu yang terhormat,
+
+Saya menulis surat ini untuk secara resmi menyampaikan keluhan mengenai kerusakan parah yang dialami oleh koper bagasi saya dalam penerbangan baru-baru ini bersama maskapai Anda, serta untuk meminta kompensasi finansial yang sesuai.
+
+Pada tanggal 14 September, saya melakukan perjalanan dari London Heathrow menuju Singapore Changi dengan penerbangan SQ318, menempati kursi 24A. Setibanya di pengambilan bagasi Terminal 3, saya mendapati bahwa koper cangkang keras saya (Nomor Label BA892104) telah retak parah di sepanjang kompartemen resleting utama, yang mengakibatkan kerusakan struktural yang tidak dapat diperbaiki serta hilangnya beberapa cinderamata pribadi yang saya beli di luar negeri.
+
+Mengingat koper ini masih baru sebelum keberangkatan dan telah didaftarkan dengan aman sesuai ketentuan bagasi Anda, penanganan ceroboh oleh kru operasional darat sangatlah mengecewakan.
+
+Oleh karena itu, saya meminta bagian layanan pelanggan Anda mengganti biaya koper yang rusak tersebut, yang bernilai £180, di samping mengganti £65 untuk barang-barang pribadi yang hilang. Bersama ini saya lampirkan kuitansi pembelian asli beserta bukti foto koper yang rusak untuk segera Anda tinjau.
+
+Saya menantikan kabar dari Anda secepatnya.
+
+Hormat saya,
 Imam Asrowardi`,
     structureBreakdown: [
       { step: 'Tujuan Surat', content: 'Paragraf 1: Langsung menyebutkan maksud penulisan secara tegas dan sopan ("I am writing to officially register a complaint...").' },
@@ -49,6 +68,11 @@ In your letter:
 • Remind the landlord who you are and where you live
 • Explain the problem with the leak and how it affects you
 • Suggest a suitable time for a plumber to visit and fix it`,
+    promptTranslation: `Anda sedang menyewa sebuah apartemen dan baru-baru ini melihat ada kebocoran di langit-langit dapur. Tulis surat kepada pemilik sewa rumah (landlord) Anda.
+Dalam surat Anda:
+• Ingatkan pemilik rumah siapa Anda dan di mana Anda tinggal
+• Jelaskan masalah kebocoran tersebut dan bagaimana hal itu mempengaruhi Anda
+• Sarankan waktu yang tepat bagi tukang ledeng untuk datang dan memperbaikinya`,
     modelAnswerBand8: `Dear Mr. Henderson,
 
 I am writing to notify you of an urgent maintenance issue regarding the apartment I am currently leasing at Flat 4B, Greenwood Court.
@@ -60,6 +84,18 @@ Could you please arrange for a qualified plumber to inspect and rectify the plum
 Thank you in advance for your prompt attention to this matter.
 
 Yours sincerely,
+Imam Asrowardi`,
+    modelAnswerTranslation: `Yth. Tn. Henderson,
+
+Saya menulis surat ini untuk memberi tahu Anda mengenai masalah pemeliharaan mendesak terkait apartemen yang sedang saya sewa di Flat 4B, Greenwood Court.
+
+Selama tiga hari terakhir, saya mengamati adanya kebocoran air yang terus-menerus muncul dari langit-langit dapur tepat di atas area bak cuci piring. Air tersebut tampaknya merembes melalui lapisan plester, menyebabkan perubahan warna yang mencolok dan bunyi tetesan air yang tiada henti. Situasi ini menjadi semakin bermasalah, karena saya terpaksa meletakkan ember-ember di bawahnya guna mencegah lantai kayu melengkung rusak, dan ada kekhawatiran nyata terkait kabel instalasi listrik di sekitar area tersebut.
+
+Dapatkah Anda mengatur agar tukang ledeng yang berkualifikasi memeriksa dan memperbaiki masalah pipa saluran air ini sesegera mungkin? Saya bekerja dari rumah (WFH) pada hari Senin dan Kamis, sehingga saya akan berada di rumah sepanjang hari tersebut untuk memberikan akses kepada kontraktor. Sebagai alternatif, Anda dapat memanfaatkan kunci cadangan Anda asalkan saya menerima pemberitahuan terlebih dahulu.
+
+Terima kasih sebelumnya atas perhatian cepat Anda terhadap masalah ini.
+
+Hormat saya,
 Imam Asrowardi`,
     structureBreakdown: [
       { step: 'Salam & Identitas', content: 'Dear Mr. Henderson + mengingatkan alamat unit sewa (Flat 4B, Greenwood Court).' },
@@ -81,6 +117,11 @@ In your letter:
 • Tell your friend about your holiday plans (where and when)
 • Explain why you want them to join you
 • Give details about accommodation and travel arrangements`,
+    promptTranslation: `Anda telah merencanakan liburan ke sebuah resor tepi pantai dan ingin mengajak seorang sahabat untuk ikut serta. Tulis surat kepada teman Anda.
+Dalam surat Anda:
+• Ceritakan kepada teman Anda tentang rencana liburan Anda (ke mana dan kapan)
+• Jelaskan mengapa Anda ingin mereka ikut bersama Anda
+• Berikan rincian tentang pengaturan akomodasi dan perjalanan`,
     modelAnswerBand8: `Dear Liam,
 
 I hope you and your family are doing great! It feels like ages since we last caught up properly.
@@ -95,6 +136,20 @@ Let me know if you can make it so we can start counting down the days!
 
 Warm regards,
 Imam`,
+    modelAnswerTranslation: `Halo Liam,
+
+Semoga kamu dan keluarga kabarnya sehat selalu! Rasanya sudah lama sekali sejak terakhir kali kita mengobrol santai.
+
+Aku menulis surat ini karena aku baru saja mematangkan rencana liburan seminggu ke Cornwall bulan depan, dari tanggal 10 sampai 17 Oktober, dan aku akan sangat senang jika kamu bisa ikut denganku. Pemandangan musim gugur di sepanjang tebing pantai konon sangat memukau, dan aku tahu betapa kamu sangat menikmati hiking luar ruangan dan fotografi.
+
+Kita belum pernah road trip bareng lagi sejak masa kuliah dulu, jadi ini akan menjadi kesempatan luar biasa untuk melepas penat dan mengenang masa-masa lalu. Aku sudah memesan sebuah pondok tepi pantai yang menawan tepat di tepi St Ives. Pondok ini memiliki dua kamar tidur terpisah dan dapur luas dengan pemandangan langsung ke laut, dan yang terbaik dari semuanya, biayanya sangat terjangkau.
+
+Terkait perjalanan, rencananya aku akan menyetir dari London pada Jumat pagi, jadi aku bisa dengan mudah menjemputmu saat melewat Bristol. Yang kamu perlukan hanyalah membawa sepatu hiking dan perlengkapan kamera.
+
+Beri tahu aku ya kalau kamu bisa ikut, biar kita bisa mulai menghitung hari!
+
+Salam hangat,
+Imam`,
     structureBreakdown: [
       { step: 'Basa-basi Ramah', content: 'Menanyakan kabar teman dengan santai ("It feels like ages since we last caught up...").' },
       { step: 'Rencana Liburan', content: 'Tujuan (Cornwall) dan tanggal (10-17 Oktober).' },
@@ -108,38 +163,38 @@ Imam`,
 export const LETTER_PHRASES_BANK = {
   formal: {
     openings: [
-      'I am writing to inform you that...',
-      'I am writing to officially register a complaint regarding...',
-      'I am writing to express my profound dissatisfaction with...',
-      'I am writing to inquire about the possibility of...'
+      { en: 'I am writing to inform you that...', id: 'Saya menulis surat ini untuk memberi tahu Anda bahwa...' },
+      { en: 'I am writing to officially register a complaint regarding...', id: 'Saya menulis untuk secara resmi menyampaikan keluhan terkait...' },
+      { en: 'I am writing to express my profound dissatisfaction with...', id: 'Saya menulis untuk menyampaikan ketidakpuasan mendalam saya atas...' },
+      { en: 'I am writing to inquire about the possibility of...', id: 'Saya menulis untuk menanyakan tentang kemungkinan...' }
     ],
     requests: [
-      'I would be most grateful if you could look into this matter urgently.',
-      'I would appreciate it if you could arrange for an immediate replacement.',
-      'Could you please furnish me with detailed information regarding...'
+      { en: 'I would be most grateful if you could look into this matter urgently.', id: 'Saya akan sangat berterima kasih jika Anda dapat menyelidiki masalah ini dengan segera.' },
+      { en: 'I would appreciate it if you could arrange for an immediate replacement.', id: 'Saya akan sangat menghargai jika Anda dapat mengatur penggantian segera.' },
+      { en: 'Could you please furnish me with detailed information regarding...', id: 'Bisakah Anda memberikan informasi rinci kepada saya mengenai...' }
     ],
     closings: [
-      'Thank you for your prompt attention to this matter.',
-      'I look forward to hearing from you at your earliest convenience.',
-      'Yours faithfully, (jika diawali Dear Sir or Madam)',
-      'Yours sincerely, (jika diawali nama e.g. Dear Mr. Smith)'
+      { en: 'Thank you for your prompt attention to this matter.', id: 'Terima kasih atas perhatian cepat Anda terhadap masalah ini.' },
+      { en: 'I look forward to hearing from you at your earliest convenience.', id: 'Saya menantikan kabar dari Anda secepatnya.' },
+      { en: 'Yours faithfully, (jika diawali Dear Sir or Madam)', id: 'Hormat saya (bila nama penerima tidak diketahui)' },
+      { en: 'Yours sincerely, (jika diawali nama e.g. Dear Mr. Smith)', id: 'Hormat saya (bila nama penerima diketahui)' }
     ]
   },
   informal: {
     openings: [
-      'How have you been doing?',
-      'It was so wonderful to hear from you the other day!',
-      'I hope everything is going smoothly with your new job.'
+      { en: 'How have you been doing?', id: 'Bagaimana kabarmu sekarang?' },
+      { en: 'It was so wonderful to hear from you the other day!', id: 'Senang sekali bisa mendengar kabarmu tempo hari!' },
+      { en: 'I hope everything is going smoothly with your new job.', id: 'Semoga semuanya berjalan lancar dengan pekerjaan barumu.' }
     ],
     invitations: [
-      'I was wondering if you would like to come with me to...',
-      'It would be absolutely brilliant if you could make it!',
-      'You really must join us, you will love it!'
+      { en: 'I was wondering if you would like to come with me to...', id: 'Aku ingin tahu apakah kamu ingin ikut denganku ke...' },
+      { en: 'It would be absolutely brilliant if you could make it!', id: 'Akan sangat menyenangkan jika kamu bisa datang!' },
+      { en: 'You really must join us, you will love it!', id: 'Kamu benar-benar harus ikut kami, kamu pasti akan menyukainya!' }
     ],
     closings: [
-      'Can\'t wait to catch up soon!',
-      'Give my best to your family.',
-      'All the best, / Warm regards,'
+      { en: 'Can\'t wait to catch up soon!', id: 'Tidak sabar untuk segera bertemu dan mengobrol!' },
+      { en: 'Give my best to your family.', id: 'Sampaikan salam hangatku untuk keluargamu.' },
+      { en: 'All the best, / Warm regards,', id: 'Salam hangat dan yang terbaik untukmu,' }
     ]
   }
 };

@@ -20,6 +20,7 @@ export default function KinestheticCopyworkArena({ xp, onAddXp }) {
   const [totalErrors, setTotalErrors] = useState(0);
   const [soundKeyEnabled, setSoundKeyEnabled] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
+  const [showTranslation, setShowTranslation] = useState(true);
 
   const inputRef = useRef(null);
 
@@ -344,6 +345,32 @@ export default function KinestheticCopyworkArena({ xp, onAddXp }) {
             );
           })}
         </div>
+
+        {/* Indonesian Translation Card */}
+        {currentLesson.indonesianTranslation && (
+          <div className="rounded-2xl bg-indigo-950/20 border border-indigo-500/30 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowTranslation(prev => !prev)}
+              className="w-full px-4 py-2.5 flex items-center justify-between text-xs font-bold text-indigo-300 hover:bg-indigo-900/30 transition text-left"
+            >
+              <span className="flex items-center gap-2">
+                <span>🇮🇩 Terjemahan Bahasa Indonesia:</span>
+                <span className="text-[10px] font-normal text-slate-400 font-sans hidden sm:inline">
+                  (Pahami makna mendalam sebelum & saat melatih ketikan)
+                </span>
+              </span>
+              <span className="text-[11px] text-indigo-400 font-mono">
+                {showTranslation ? 'Sembunyikan ▲' : 'Lihat Terjemahan ▼'}
+              </span>
+            </button>
+            {showTranslation && (
+              <div className="p-4 pt-2 text-xs sm:text-sm text-slate-300 leading-relaxed font-sans border-t border-indigo-500/20 whitespace-pre-line bg-slate-950/60">
+                {currentLesson.indonesianTranslation}
+              </div>
+            )}
+          </div>
+        )}
 
         {/* Real-time Typing Textarea Input (Hidden or Synchronized) */}
         <div className="space-y-2">

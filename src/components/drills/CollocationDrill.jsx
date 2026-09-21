@@ -201,22 +201,32 @@ export default function CollocationDrill({ xp, onAddXp }) {
                   </span>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-1.5">
                   <div className="text-xs text-rose-300/80 line-through">
-                    "{item.band5}"
+                    "{item.band5}" {item.band5Meaning && <span className="text-[11px] text-slate-400 no-underline font-normal">({item.band5Meaning})</span>}
                   </div>
                   <div className="text-base font-bold text-white tracking-tight">
                     {item.band8}
                   </div>
+                  {item.band8Meaning && (
+                    <div className="text-xs text-emerald-400/90 font-medium">
+                      🇮🇩 {item.band8Meaning}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {/* In-context example */}
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 text-xs text-slate-300">
+              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800/80 text-xs text-slate-300 space-y-1">
                 <div className="text-[10px] uppercase font-bold text-indigo-400 mb-1">Contoh dalam Kalimat Esai:</div>
                 <div className="italic leading-relaxed">
                   "{item.example}"
                 </div>
+                {item.exampleTranslation && (
+                  <div className="text-[11px] text-slate-400 not-italic pt-1 border-t border-slate-800/50">
+                    🇮🇩 {item.exampleTranslation}
+                  </div>
+                )}
               </div>
             </div>
           ))}

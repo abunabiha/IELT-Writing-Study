@@ -9,6 +9,7 @@ export default function Task1ChartLab({ onAddXp }) {
   const [activeStep, setActiveStep] = useState(1);
   const [selectedVerbs, setSelectedVerbs] = useState([]);
   const [copied, setCopied] = useState(false);
+  const [showModelTranslation, setShowModelTranslation] = useState(false);
 
   const sampleData = [
     { year: 2000, coal: 55, gas: 25, solar: 4, hydro: 16 },
@@ -90,10 +91,15 @@ In stark contrast, sustainable alternatives progressed rapidly. In 2000, combine
         {/* Left 2 Cols: Interactive Graph */}
         <div className="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold text-slate-200">
-              Electricity Generation by Source (European Nation, 2000-2020)
-            </h3>
-            <span className="text-xs text-indigo-400 font-semibold">Proportions (%)</span>
+            <div>
+              <h3 className="text-sm font-bold text-slate-200">
+                Electricity Generation by Source (European Nation, 2000-2020)
+              </h3>
+              <p className="text-xs text-amber-400 font-medium mt-0.5">
+                🇮🇩 Pembangkitan Listrik Berdasarkan Sumber Energi (Negara Eropa, 2000-2020)
+              </p>
+            </div>
+            <span className="text-xs text-indigo-400 font-semibold shrink-0">Proportions (%)</span>
           </div>
 
           {/* SVG Canvas Line Chart */}
@@ -253,13 +259,21 @@ In stark contrast, sustainable alternatives progressed rapidly. In 2000, combine
             <BookOpen className="w-5 h-5 text-indigo-400" />
             <h3 className="text-lg font-bold text-white">Contoh Jawaban Model Resmi (Band 8.5)</h3>
           </div>
-          <button
-            onClick={copyModelAnswer}
-            className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700"
-          >
-            {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
-            <span>{copied ? 'Tersalin!' : 'Salin Contoh'}</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setShowModelTranslation(prev => !prev)}
+              className="px-3 py-1.5 rounded-xl bg-amber-500/20 text-amber-300 hover:bg-amber-500/30 text-xs font-semibold flex items-center gap-1.5 transition border border-amber-500/30"
+            >
+              <span>{showModelTranslation ? '🇮🇩 Tutup Terjemahan' : '🇮🇩 Lihat Terjemahan Indonesia'}</span>
+            </button>
+            <button
+              onClick={copyModelAnswer}
+              className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold flex items-center gap-1.5 transition border border-slate-700"
+            >
+              {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+              <span>{copied ? 'Tersalin!' : 'Salin Contoh'}</span>
+            </button>
+          </div>
         </div>
 
         <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800/80 font-serif text-sm sm:text-base text-slate-200 leading-relaxed space-y-4">
@@ -277,6 +291,28 @@ In stark contrast, sustainable alternatives progressed rapidly. In 2000, combine
             In stark contrast, sustainable alternatives progressed rapidly. In 2000, combined solar and wind generation accounted for a nominal 4%. Following a steady ascent to 15% in 2010, this segment surged dramatically over the subsequent decade, overtaking all counterparts to conclude at a formidable 46%. Meanwhile, hydroelectric generation remained notably stable throughout the twenty-year span, oscillating marginally around the 15% to 18% threshold.
           </p>
         </div>
+
+        {/* Indonesian Translation Drawer */}
+        {showModelTranslation && (
+          <div className="p-5 rounded-2xl bg-slate-950 border border-amber-500/30 space-y-3 font-sans text-xs sm:text-sm text-slate-300 leading-relaxed animate-in fade-in">
+            <div className="text-xs font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5 border-b border-slate-800 pb-2">
+              <span>🇮🇩 Terjemahan Lengkap Bahasa Indonesia:</span>
+            </div>
+            <p>
+              Grafik garis ini memetakan kontribusi proporsional dari empat sumber energi utama—yaitu batu bara, gas alam, pembangkit listrik tenaga air, dan angin/surya—terhadap keseluruhan produksi listrik di suatu negara Eropa dari tahun 2000 hingga 2020.
+            </p>
+            <p className="bg-amber-950/20 p-3 rounded-xl border-l-4 border-amber-500 text-amber-200">
+              <span className="font-bold">[OVERVIEW] </span>
+              Secara keseluruhan, terlihat nyata bahwa ketergantungan pada bahan bakar fosil mengalami penurunan drastis, dengan batu bara mengalami penurunan paling tajam. Sebaliknya, energi terbarukan, khususnya angin dan surya, menunjukkan lonjakan besar, memperkokoh posisinya sebagai produsen listrik utama di akhir periode waktu tersebut.
+            </p>
+            <p>
+              Dimulai pada tahun 2000, batu bara merupakan sumber listrik utama yang mendominasi, menghasilkan sekitar 55% listrik negara tersebut. Namun, angka ini terus menurun hingga menjadi 38% di tahun 2010 sebelum anjlok ke angka kecil 12% pada tahun 2020. Gas alam mengalami fluktuasi sedang; berawal dari 25%, naik ke puncak 33% di pertengahan periode, lalu turun kembali ke 22% pada tahun terakhir.
+            </p>
+            <p>
+              Sangat kontras, energi terbarukan berkembang pesat. Pada tahun 2000, gabungan surya dan angin hanya menyumbang 4%. Setelah naik stabil menjadi 15% pada tahun 2010, segmen ini melonjak tajam dalam dekade berikutnya, melampaui sumber energi lainnya hingga mencapai 46%. Sementara itu, tenaga air tetap stabil sepanjang 20 tahun tersebut, berfluktuasi tipis di kisaran 15% sampai 18%.
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );

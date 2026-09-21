@@ -56,6 +56,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 5.5',
     wordCount: 19,
     modelText: 'Although urbanization brings noticeable economic advantages, it frequently accelerates environmental degradation across developing nations.',
+    indonesianTranslation: 'Meskipun urbanisasi membawa keuntungan ekonomi yang nyata, hal tersebut kerap kali mempercepat degradasi lingkungan di berbagai negara berkembang.',
     grammaticalBreakdown: {
       clauseStructure: 'Subordinate clause konsesif ("Although...") diikuti Main clause independen ("it frequently accelerates...").',
       academicVocabulary: ['noticeable economic advantages', 'accelerates environmental degradation'],
@@ -70,6 +71,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 6.0',
     wordCount: 22,
     modelText: 'Computers perform calculations with superior speed, but human professionals are still required for strategic and empathetic decision-making.',
+    indonesianTranslation: 'Komputer melakukan perhitungan dengan kecepatan luar biasa, namun tenaga profesional manusia tetap diperlukan untuk pengambilan keputusan yang strategis dan berempati.',
     grammaticalBreakdown: {
       clauseStructure: 'Compound sentence dengan konjungsi koordinatif adversatif ("but") menghubungkan dua klausa independen.',
       academicVocabulary: ['superior speed', 'strategic and empathetic decision-making'],
@@ -84,6 +86,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 6.0',
     wordCount: 18,
     modelText: 'Financial support must be allocated to public libraries because books provide essential knowledge to underprivileged students.',
+    indonesianTranslation: 'Dukungan finansial harus dialokasikan ke perpustakaan umum karena buku menyediakan ilmu pengetahuan esensial bagi para siswa yang kurang mampu.',
     grammaticalBreakdown: {
       clauseStructure: 'Passive modal clause ("must be allocated") diikuti adverbial clause alasan ("because...").',
       academicVocabulary: ['allocated', 'essential knowledge', 'underprivileged students'],
@@ -98,6 +101,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 6.0',
     wordCount: 19,
     modelText: 'Consuming excessive sugary beverages on a daily basis inevitably increases the risk of severe cardiovascular disease.',
+    indonesianTranslation: 'Mengonsumsi minuman berpemanis secara berlebihan setiap hari tak terelakkan lagi meningkatkan risiko penyakit kardiovaskular yang parah.',
     grammaticalBreakdown: {
       clauseStructure: 'Gerund phrase ("Consuming excessive sugary beverages...") bertindak sebagai Subjek tunggal dengan kata kerja "increases".',
       academicVocabulary: ['inevitably increases', 'severe cardiovascular disease'],
@@ -116,6 +120,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 7.0',
     wordCount: 34,
     modelText: 'Generative algorithms can process vast legal repositories within seconds, which significantly diminishes the administrative burden on junior solicitors and allows organizations to optimize operational expenditure.',
+    indonesianTranslation: 'Algoritma generatif mampu memproses repositori hukum yang sangat luas dalam hitungan detik, yang secara signifikan mengurangi beban administratif bagi pengacara junior dan memungkinkan organisasi mengoptimalkan pengeluaran operasional.',
     grammaticalBreakdown: {
       clauseStructure: 'Main clause diikuti sentential relative clause (", which...") yang mengomentari seluruh situasi klausa pertama.',
       academicVocabulary: ['legal repositories', 'significantly diminishes', 'administrative burden', 'optimize operational expenditure'],
@@ -130,6 +135,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 7.5',
     wordCount: 36,
     modelText: 'Despite renewable energy sources becoming progressively more cost-effective, numerous industrialized economies remain heavily reliant on traditional fossil fuels, thereby impeding international efforts to curb greenhouse gas emissions.',
+    indonesianTranslation: 'Meskipun sumber energi terbarukan menjadi semakin hemat biaya secara bertahap, banyak negara industri tetap sangat bergantung pada bahan bakar fosil konvensional, sehingga menghambat upaya internasional untuk menekan emisi gas rumah kaca.',
     grammaticalBreakdown: {
       clauseStructure: 'Prepositional concession ("Despite + noun phrase/gerund") + Main clause + Participial result clause ("thereby impeding...").',
       academicVocabulary: ['progressively more cost-effective', 'heavily reliant', 'thereby impeding', 'curb greenhouse gas emissions'],
@@ -144,6 +150,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 8.0',
     wordCount: 38,
     modelText: 'Not only does custodial sentencing frequently fail to rehabilitate habitual offenders, but it also imposes an onerous fiscal burden on state treasuries, which undermines long-term public investments in educational infrastructure.',
+    indonesianTranslation: 'Hukuman penjara tidak hanya sering kali gagal merehabilitasi residivis kejahatan, tetapi juga membebankan beban keuangan yang berat pada kas negara, yang pada akhirnya melemahkan investasi publik jangka panjang di bidang infrastruktur pendidikan.',
     grammaticalBreakdown: {
       clauseStructure: 'Negative inversion ("Not only does [Subject] [Verb]... but it also...") + Non-defining relative clause.',
       academicVocabulary: ['custodial sentencing', 'rehabilitate habitual offenders', 'onerous fiscal burden', 'undermines long-term public investments'],
@@ -162,6 +169,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 8.0',
     wordCount: 96,
     modelText: 'Prime among the merits of higher vocational apprenticeships is their direct alignment with prevailing industrial requirements. By immersing learners in authentic workplace ecosystems, technical institutions ensure that theoretical knowledge is reinforced through practical application. A compelling illustration can be observed in the precision manufacturing sector, where dual-track apprentices attain proficiency in advanced robotic assembly far swifter than their traditional university counterparts. Consequently, vocational graduates enjoy superior employability rates, effectively dispelling the archaic misconception that tertiary academic degrees represent the sole viable conduit to lucrative employment.',
+    indonesianTranslation: 'Keunggulan utama dari program magang kejuruan tingkat tinggi adalah keselarasan langsungnya dengan kebutuhan industri saat ini. Dengan membenamkan peserta didik ke dalam ekosistem tempat kerja autentik, institusi teknik memastikan bahwa pengetahuan teoritis diperkuat melalui penerapan praktis. Contoh nyata yang meyakinkan dapat diamati pada sektor manufaktur presisi, di mana peserta magang jalur ganda meraih keahlian dalam perakitan robotik tingkat lanjut jauh lebih cepat dibanding rekan mereka dari universitas tradisional. Akibatnya, lulusan kejuruan menikmati tingkat keterterimaan kerja yang lebih tinggi, sekaligus secara efektif mematahkan kesalahpahaman kuno bahwa gelar sarjana akademis merupakan satu-satunya jalur yang layak menuju pekerjaan bergaji tinggi.',
     grammaticalBreakdown: {
       clauseStructure: 'P (Point: "Prime among the merits...") ➔ E (Explanation: "By immersing...") ➔ E (Evidence: "A compelling illustration...") ➔ L (Link: "Consequently...").',
       academicVocabulary: ['direct alignment', 'prevailing industrial requirements', 'authentic workplace ecosystems', 'compelling illustration', 'dual-track apprentices', 'superior employability', 'sole viable conduit'],
@@ -176,6 +184,7 @@ export const COPYWORK_LESSONS = [
     bandTarget: 'Band 8.0',
     wordCount: 88,
     modelText: 'Overall, it is readily apparent that renewable energy consumption experienced a substantial upward trajectory throughout the twenty-year span, with solar generation demonstrating the most pronounced growth. Conversely, reliance on traditional hydrocarbons, most notably coal, witnessed a precipitous diminution, ultimately tumbling to its lowest recorded share by the culmination of the timeframe. Meanwhile, nuclear and hydroelectric outputs manifested nominal fluctuations, consolidating their position as stable secondary contributors within the nation’s aggregate electrical grid.',
+    indonesianTranslation: 'Secara keseluruhan, terlihat sangat jelas bahwa konsumsi energi terbarukan mengalami tren kenaikan yang signifikan sepanjang rentang dua puluh tahun tersebut, dengan pembangkitan tenaga surya menunjukkan pertumbuhan yang paling mencolok. Sebaliknya, ketergantungan pada hidrokarbon tradisional, khususnya batu bara, mengalami penurunan drastis, hingga akhirnya anjlok ke pangsa terendah yang pernah tercatat di akhir periode waktu tersebut. Sementara itu, produksi tenaga nuklir dan hidroelektrik memperlihatkan fluktuasi tipis, memperkokoh posisi keduanya sebagai kontributor sekunder yang stabil di dalam jaringan listrik nasional secara agregat.',
     grammaticalBreakdown: {
       clauseStructure: 'Overall sentence (General trend 1: Renewable boom) ➔ Contrast transition (Hydrocarbon drop) ➔ Secondary stability trend.',
       academicVocabulary: ['readily apparent', 'substantial upward trajectory', 'pronounced growth', 'precipitous diminution', 'culmination of the timeframe', 'nominal fluctuations', 'aggregate electrical grid'],
@@ -200,6 +209,13 @@ On the one hand, apprehensions regarding workforce displacement are well-founded
 On the other hand, technological revolutions have perpetually redefined labor paradigms rather than eradicating work altogether. The proliferation of automated systems inevitably engenders demand for specialized vocations spanning algorithm auditing to ethics compliance. Furthermore, when routine administrative duties are delegated to synthetic intelligence, human workers are liberated to prioritize empathetic and strategic problem-solving. In the software industry, for example, automated code generation has empowered programmers to engineer multifaceted applications at scale, bolstering output rather than terminating employment.
 
 In conclusion, although the proliferation of artificial intelligence undoubtedly entails severe friction for vulnerable segments of the workforce, it does not herald an insurmountable employment crisis. By proactively orchestrating educational realignments and fostering lifelong human capital development, societies can harness this transformative paradigm to elevate aggregate prosperity.`,
+    indonesianTranslation: `Banyak pihak berpendapat bahwa kemajuan kecerdasan buatan yang tak terbendung menandakan masa depan yang diwarnai oleh pengangguran struktural massal yang parah. Sebaliknya, para pendukungnya berpendapat bahwa teknologi otomatisasi berfungsi sebagai pemicu ekspansi ekonomi yang belum pernah ada sebelumnya. Menurut perkiraan saya, meskipun disrupsi sementara tidak dapat disangkal, otomatisasi pada akhirnya akan meningkatkan kemampuan manusia daripada menyebabkan keusangan lapangan kerja secara luas.
+
+Di satu sisi, kekhawatiran mengenai pergeseran tenaga kerja memiliki dasar yang kuat. Secara historis, mekanisasi menargetkan pekerjaan manual rutin; namun, algoritma neural modern kian merambah ranah kognitif yang kompleks. Kesamaan dapat diamati pada sektor administrasi dan diagnostik kesehatan, di mana perangkat lunak menafsirkan hasil radiografi medis dengan kecepatan lebih unggul dan margin kesalahan yang sangat minim. Konsekuensinya, para profesional yang kekurangan literasi teknologi khusus menghadapi ancaman marjinalisasi yang nyata, sehingga memperlebar jurang sosial-ekonomi kecuali jika program pelatihan ulang yang menyeluruh segera diberlakukan.
+
+Di sisi lain, revolusi teknologi sepanjang sejarah selalu mendefinisikan ulang paradigma kerja alih-alih menghapus pekerjaan sama sekali. Menjamurnya sistem otomatis tak terelakkan lagi melahirkan permintaan akan profesi-profesi spesialis, mulai dari audit algoritma hingga kepatuhan etika AI. Terlebih lagi, ketika tugas-tugas administratif rutin dilimpahkan kepada kecerdasan sintetis, pekerja manusia dibebaskan untuk memprioritaskan pemecahan masalah yang berorientasi empati dan strategis. Di industri perangkat lunak, contohnya, pembuatan kode otomatis telah memberdayakan pemrogram untuk merancang aplikasi berskala besar, yang justru mendongkrak produktivitas alih-alih memberhentikan pegawai.
+
+Kesimpulannya, meskipun proliferasi kecerdasan buatan tidak diragukan lagi menimbulkan gesekan berat bagi segmen tenaga kerja yang rentan, hal ini tidak mengisyaratkan krisis pengangguran yang tak teratasi. Dengan secara proaktif mengatur penyesuaian kurikulum pendidikan dan membina pengembangan modal manusia seumur hidup, masyarakat dapat memanfaatkan paradigma transformatif ini untuk meningkatkan kemakmuran bersama.`,
     grammaticalBreakdown: {
       clauseStructure: '4 Paragraf Utuh IELTS Standar: Introduction (Paraphrase + Balanced Thesis) ➔ Body 1 (Displacement arguments) ➔ Body 2 (Augmentation & New Opportunities) ➔ Conclusion (Balanced synthesis).',
       academicVocabulary: [
@@ -226,6 +242,13 @@ On the one hand, personal lifestyle modifications exert a meaningful grassroots 
 Nevertheless, personal initiatives are intrinsically constrained in their capacity to combat global ecological degradation. The preeminent drivers of climate change—namely industrial coal combustion, cross-border maritime shipping, and extensive deforestation—transcend the jurisdiction of private citizens. Only sovereign governments possess the requisite legislative authority to penalize corporate polluters and mandate carbon emissions ceilings. Moreover, the transition to renewable power grids requires colossal capital investments that can solely be financed through public treasuries or international green bonds.
 
 In conclusion, although conscientious citizen behavior is pivotal in establishing a culture of conservation, it remains fundamentally inadequate as an isolated solution. Governments must spearhead the environmental agenda by enforcing stringent statutory regulations and funding macroscopic renewable infrastructure, thereby ensuring the preservation of the planet for posterity.`,
+    indonesianTranslation: `Apakah pelestarian lingkungan merupakan tanggung jawab utama individu warga negara ataukah pemerintah negara tetap menjadi bahan perdebatan yang sengit. Kendati penyesuaian gaya hidup individu tidak diragukan lagi menumbuhkan kesadaran lingkungan kolektif, saya berpendapat bahwa pemulihan ekologis yang nyata dan bertahan lama hanya dapat dicapai melalui intervensi tegas dari pemerintah.
+
+Di satu sisi, modifikasi gaya hidup pribadi memberikan pengaruh akar rumput yang bermakna. Ketika konsumen secara sadar mengurangi plastik sekali pakai dan beralih ke transportasi umum, jumlah total sampah perkotaan dan emisi kendaraan akan berkurang seiring berjalannya waktu. Selain itu, preferensi konsumen yang meluas terhadap produk ramah lingkungan mendorong pelaku usaha untuk mengadopsi proses manufaktur yang etis. Contoh nyatanya adalah pesatnya pasar produk organik, yang tumbuh sebagian besar berkat meningkatnya kehati-hatian konsumen terhadap kontaminasi pestisida.
+
+Kendati demikian, inisiatif pribadi secara mendasar terbatas kemampuannya dalam memerangi kerusakan ekologis global. Pemicu utama perubahan iklim—yaitu pembakaran batu bara industri, pelayaran kargo maritim lintas negara, dan deforestasi skala luas—melampaui batas kewenangan warga negara biasa. Hanya pemerintah berdaulat yang memiliki otoritas legislatif yang sah untuk menjatuhkan sanksi hukum kepada korporasi perusak lingkungan dan menetapkan batas atas emisi karbon. Terlebih lagi, transisi menuju jaringan listrik energi terbarukan memerlukan investasi modal kolosal yang hanya dapat dibiayai melalui kas negara atau obligasi hijau internasional.
+
+Kesimpulannya, meskipun perilaku warga yang peduli lingkungan sangat penting dalam membangun budaya konservasi, tindakan tersebut secara mendasar tetap tidak memadai jika berdiri sendiri. Pemerintah harus memimpin agenda lingkungan hidup dengan menegakkan peraturan hukum yang ketat serta mendanai infrastruktur energi terbarukan berskala makro, guna memastikan kelestarian bumi bagi generasi mendatang.`,
     grammaticalBreakdown: {
       clauseStructure: '4 Paragraf Lengkap: Introduction (Dilemma + Clear Thesis) ➔ Body 1 (Consumer grassroot power) ➔ Body 2 (State legislative & fiscal supremacy) ➔ Conclusion (Strategic synthesis).',
       academicVocabulary: [

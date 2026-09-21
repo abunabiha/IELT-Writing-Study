@@ -170,6 +170,14 @@ export default function GeneralTrainingLetterLab({ geminiApiKey, onAddXp }) {
           <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 text-xs sm:text-sm text-slate-200 whitespace-pre-line leading-relaxed">
             {prompt.promptText}
           </div>
+          {prompt.promptTranslation && (
+            <div className="mt-2.5 p-3.5 rounded-2xl bg-slate-950/80 border border-cyan-500/20 text-xs text-slate-300 leading-relaxed font-sans">
+              <span className="font-bold text-cyan-400">🇮🇩 Terjemahan Soal & Instruksi:</span>
+              <div className="whitespace-pre-line mt-1">
+                {prompt.promptTranslation}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Essential Rules Card */}
@@ -194,31 +202,41 @@ export default function GeneralTrainingLetterLab({ geminiApiKey, onAddXp }) {
             <div className="space-y-3 text-xs">
               <div>
                 <div className="font-bold text-slate-300 mb-1">Frasa Pembuka:</div>
-                <div className="flex flex-wrap gap-2">
-                  {(prompt.letterType === 'Informal' ? LETTER_PHRASES_BANK.informal.openings : LETTER_PHRASES_BANK.formal.openings).map((ph, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleInsertPhrase(ph)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-white transition text-left"
-                    >
-                      + "{ph}"
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {(prompt.letterType === 'Informal' ? LETTER_PHRASES_BANK.informal.openings : LETTER_PHRASES_BANK.formal.openings).map((ph, idx) => {
+                    const text = typeof ph === 'string' ? ph : ph.en;
+                    const trans = typeof ph === 'object' && ph.id ? ph.id : '';
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleInsertPhrase(text)}
+                        className="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 hover:border-indigo-500 hover:text-white transition text-left space-y-0.5"
+                      >
+                        <div className="font-medium text-xs text-slate-100">+ "{text}"</div>
+                        {trans && <div className="text-[11px] text-indigo-300/80 italic">🇮🇩 {trans}</div>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
 
               <div>
                 <div className="font-bold text-slate-300 mb-1">Frasa Permintaan / Harapan:</div>
-                <div className="flex flex-wrap gap-2">
-                  {(prompt.letterType === 'Informal' ? LETTER_PHRASES_BANK.informal.invitations : LETTER_PHRASES_BANK.formal.requests).map((ph, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleInsertPhrase(ph)}
-                      className="px-3 py-1.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-300 hover:border-indigo-500 hover:text-white transition text-left"
-                    >
-                      + "{ph}"
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {(prompt.letterType === 'Informal' ? LETTER_PHRASES_BANK.informal.invitations : LETTER_PHRASES_BANK.formal.requests).map((ph, idx) => {
+                    const text = typeof ph === 'string' ? ph : ph.en;
+                    const trans = typeof ph === 'object' && ph.id ? ph.id : '';
+                    return (
+                      <button
+                        key={idx}
+                        onClick={() => handleInsertPhrase(text)}
+                        className="p-2.5 rounded-xl bg-slate-900 border border-slate-700 text-slate-200 hover:border-indigo-500 hover:text-white transition text-left space-y-0.5"
+                      >
+                        <div className="font-medium text-xs text-slate-100">+ "{text}"</div>
+                        {trans && <div className="text-[11px] text-indigo-300/80 italic">🇮🇩 {trans}</div>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             </div>
@@ -227,7 +245,7 @@ export default function GeneralTrainingLetterLab({ geminiApiKey, onAddXp }) {
 
         {/* Model Answer Drawer */}
         {showModel && (
-          <div className="p-5 rounded-3xl bg-slate-950 border border-cyan-500/30 space-y-3 animate-fadeIn">
+          <div className="p-5 rounded-3xl bg-slate-950 border border-cyan-500/30 space-y-4 animate-fadeIn">
             <div className="flex items-center justify-between border-b border-slate-800 pb-2">
               <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">
                 Model Surat Resmi Skor Band 8.5+:
@@ -252,6 +270,13 @@ export default function GeneralTrainingLetterLab({ geminiApiKey, onAddXp }) {
             <div className="p-4 rounded-2xl bg-slate-900/60 font-serif text-xs sm:text-sm text-slate-200 whitespace-pre-line leading-relaxed">
               {prompt.modelAnswerBand8}
             </div>
+
+            {prompt.modelAnswerTranslation && (
+              <div className="p-4 rounded-2xl bg-slate-900/40 border border-cyan-500/20 font-sans text-xs sm:text-sm text-slate-300 whitespace-pre-line leading-relaxed space-y-1">
+                <span className="font-bold text-amber-400 block text-xs">🇮🇩 Terjemahan Lengkap Bahasa Indonesia:</span>
+                <div>{prompt.modelAnswerTranslation}</div>
+              </div>
+            )}
 
             <div className="pt-2 space-y-1.5 text-xs">
               <div className="font-bold text-slate-400">Analisis Struktur Paragraf:</div>

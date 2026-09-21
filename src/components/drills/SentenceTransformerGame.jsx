@@ -129,6 +129,12 @@ export default function SentenceTransformerGame({ xp, onAddXp }) {
           <p className="text-base sm:text-lg text-slate-200 font-medium italic">
             "{challenge.band5Original}"
           </p>
+          {challenge.band5Translation && (
+            <div className="mt-2.5 pt-2 border-t border-rose-500/20 text-xs text-rose-300/90 font-sans not-italic flex items-start gap-1.5">
+              <span className="font-semibold text-rose-400 shrink-0">🇮🇩 Arti:</span>
+              <span>"{challenge.band5Translation}"</span>
+            </div>
+          )}
         </div>
 
         {/* Clue / Hint Button */}
@@ -189,8 +195,13 @@ export default function SentenceTransformerGame({ xp, onAddXp }) {
                     <span className="w-7 h-7 rounded-xl bg-slate-800 text-slate-300 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                       {String.fromCharCode(65 + idx)}
                     </span>
-                    <div>
+                    <div className="flex-1">
                       <p className="text-sm font-medium leading-relaxed">{opt.text}</p>
+                      {opt.translation && (
+                        <p className="text-xs text-slate-400 mt-1.5 italic font-sans">
+                          🇮🇩 {opt.translation}
+                        </p>
+                      )}
                       
                       {/* Evaluation Breakdown */}
                       {hasEvaluated && (

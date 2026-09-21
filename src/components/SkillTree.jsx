@@ -294,8 +294,14 @@ export default function SkillTree({ xp, onAddXp, completedDrills, onCompleteDril
             </div>
 
             {/* Drill Prompt */}
-            <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/20 text-slate-200 text-sm font-medium leading-relaxed">
-              {selectedDrill.prompt}
+            <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/20 text-slate-200 text-sm font-medium leading-relaxed space-y-2">
+              <div>{selectedDrill.prompt}</div>
+              {selectedDrill.promptTranslation && (
+                <div className="pt-2 border-t border-indigo-500/20 text-xs text-indigo-300/90 font-normal">
+                  <span className="font-semibold text-indigo-300">🇮🇩 Terjemahan Soal: </span>
+                  <span>{selectedDrill.promptTranslation}</span>
+                </div>
+              )}
             </div>
 
             {/* Option Type: Multiple Choice */}
@@ -327,6 +333,11 @@ export default function SkillTree({ xp, onAddXp, completedDrills, onCompleteDril
                       </span>
                       <div className="flex-1">
                         <div>{opt.text}</div>
+                        {opt.translation && (
+                          <div className="text-xs text-slate-400 mt-1 italic">
+                            🇮🇩 {opt.translation}
+                          </div>
+                        )}
                         {showFeedback && (
                           <div className={`mt-2 text-xs pt-2 border-t border-slate-800/80 ${
                             opt.isCorrect ? 'text-emerald-300' : 'text-slate-400'
@@ -352,11 +363,18 @@ export default function SkillTree({ xp, onAddXp, completedDrills, onCompleteDril
                     key={sent.id}
                     className="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs sm:text-sm flex items-center justify-between gap-3 text-slate-200"
                   >
-                    <div className="flex items-center gap-3">
-                      <span className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center shrink-0">
+                    <div className="flex items-start gap-3 flex-1">
+                      <span className="w-6 h-6 rounded-full bg-indigo-500/20 text-indigo-300 font-bold text-xs flex items-center justify-center shrink-0 mt-0.5">
                         {sIdx + 1}
                       </span>
-                      <span>{sent.text}</span>
+                      <div className="flex-1">
+                        <div>{sent.text}</div>
+                        {sent.translation && (
+                          <div className="text-xs text-slate-400 mt-1 italic">
+                            🇮🇩 {sent.translation}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-col gap-1 shrink-0">
                       <button

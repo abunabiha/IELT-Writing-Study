@@ -191,9 +191,16 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
           "{promptObj.question}"
         </h3>
 
+        {promptObj.questionTranslation && (
+          <div className="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-xs text-slate-300 leading-relaxed flex items-start gap-2">
+            <span className="font-bold text-amber-400 shrink-0">🇮🇩 Terjemahan Soal:</span>
+            <span>{promptObj.questionTranslation}</span>
+          </div>
+        )}
+
         {/* Optional Model Answer Modal / Dropdown */}
         {showModelAnswer && (
-          <div className="mt-4 p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-3">
+          <div className="mt-4 p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-4">
             <div className="flex items-center justify-between text-xs text-emerald-400 font-bold border-b border-slate-850 pb-2">
               <span>Model Answer Resmi Skor Band 8.5+:</span>
               <button
@@ -206,6 +213,14 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
             <div className="text-xs sm:text-sm text-slate-300 font-serif leading-relaxed whitespace-pre-line">
               {promptObj.modelAnswerBand8}
             </div>
+            {promptObj.modelAnswerTranslation && (
+              <div className="pt-3 border-t border-slate-800 space-y-1.5">
+                <span className="text-xs font-bold text-amber-400">🇮🇩 Terjemahan Bahasa Indonesia:</span>
+                <div className="text-xs sm:text-sm text-slate-300 font-sans leading-relaxed whitespace-pre-line">
+                  {promptObj.modelAnswerTranslation}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
