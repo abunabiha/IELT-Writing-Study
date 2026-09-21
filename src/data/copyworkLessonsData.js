@@ -540,6 +540,8 @@ export const COPYWORK_LESSONS = [
     "bandTarget": "Band 6.0",
     "wordCount": 19,
     "visualChart": {
+      "unit": "Juta Ton",
+      "years": ["2000", "2007", "2014", "2020"],
       "type": "line",
       "titleEn": "Carbon Dioxide Emissions by Economic Sector (2000 - 2020)",
       "titleId": "Emisi Karbon Dioksida Berdasarkan Sektor Ekonomi (Juta Ton Metrik)",
@@ -724,6 +726,8 @@ export const COPYWORK_LESSONS = [
     "bandTarget": "Band 7.5",
     "wordCount": 30,
     "visualChart": {
+      "unit": "USD / Barel",
+      "years": ["2018", "2020", "2022", "2024"],
       "type": "line",
       "titleEn": "Crude Oil Price Benchmark (2018 - 2024)",
       "titleId": "Fluktuasi Harga Patokan Minyak Mentah Dunia (USD per Barel)",
@@ -819,6 +823,8 @@ export const COPYWORK_LESSONS = [
     "bandTarget": "Band 8.0",
     "wordCount": 70,
     "visualChart": {
+      "unit": "Indeks Skor",
+      "years": ["2 Jam", "4 Jam", "6 Jam", "8 Jam"],
       "type": "line",
       "titleEn": "Daily Screen Time vs Academic Attainment",
       "titleId": "Waktu Layar Harian Rekreasi vs Nilai Rata-rata Ujian Siswa (%)",
@@ -907,6 +913,8 @@ export const COPYWORK_LESSONS = [
     "bandTarget": "Band 8.5+",
     "wordCount": 166,
     "visualChart": {
+      "unit": "Ton Metrik",
+      "years": ["1980", "1995", "2010", "2020"],
       "type": "line",
       "titleEn": "Carbon Dioxide Output Per Capita in Metric Tons (1980 - 2020)",
       "titleId": "Pelepasan Karbon Dioksida Per Kapita dalam Ton Metrik (1980 - 2020)",

@@ -16,170 +16,296 @@ function VisualChartDisplay({ chart }) {
   if (!chart) return null;
 
   return (
-    <div className="rounded-2xl bg-slate-950 border border-indigo-500/40 p-4 md:p-6 mb-6 shadow-inner space-y-4">
-      {/* Chart Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-800 pb-3">
-        <div>
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-indigo-500/20 text-indigo-300 text-[11px] font-bold uppercase tracking-wider mb-1">
+    <div className="rounded-2xl bg-slate-950/95 border border-indigo-500/40 p-4 sm:p-6 mb-6 shadow-2xl space-y-4 overflow-hidden">
+      {/* 1. Header Informasi Diagram */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-3.5">
+        <div className="space-y-1">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-indigo-500/20 border border-indigo-500/40 text-indigo-300 text-[11px] font-bold uppercase tracking-wider">
             <BarChart3 className="w-3.5 h-3.5" />
-            <span>Visual Task 1: {chart.type.toUpperCase()}</span>
+            <span>IELTS Academic Task 1: {chart.type?.toUpperCase()}</span>
           </div>
-          <h4 className="text-base md:text-lg font-bold text-white">{chart.titleEn}</h4>
-          <p className="text-xs text-slate-400">🇮🇩 {chart.titleId}</p>
+          <h4 className="text-base sm:text-lg font-extrabold text-white tracking-tight">{chart.titleEn}</h4>
+          <p className="text-xs sm:text-sm text-slate-300 font-medium">🇮🇩 {chart.titleId}</p>
         </div>
+        {chart.unit && (
+          <div className="self-start sm:self-center px-3 py-1 rounded-lg bg-slate-900 border border-slate-700/80 text-[11px] text-slate-300 font-mono">
+            Satuan: <span className="text-indigo-400 font-bold">{chart.unit}</span>
+          </div>
+        )}
       </div>
 
-      {/* Question Prompt Box (Bilingual) */}
-      <div className="p-3.5 rounded-xl bg-slate-900/90 border border-slate-800 text-xs">
-        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block mb-1">
+      {/* 2. Question Prompt Box (Bilingual) */}
+      <div className="p-3.5 sm:p-4 rounded-xl bg-slate-900/90 border border-slate-800 text-xs sm:text-sm shadow-inner space-y-1">
+        <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">
           Instruksi Soal Task 1:
         </span>
-        <p className="text-slate-200 font-medium leading-relaxed">{chart.promptEn}</p>
-        <p className="text-slate-400 mt-1.5 leading-relaxed italic">🇮🇩 {chart.promptId}</p>
+        <p className="text-slate-100 font-medium leading-relaxed">{chart.promptEn}</p>
+        <p className="text-amber-200/80 leading-relaxed italic text-xs pt-1 border-t border-slate-800/60 mt-1.5">
+          🇮🇩 {chart.promptId}
+        </p>
       </div>
 
-      {/* SVG RENDERING AREA */}
-      <div className="bg-slate-900/80 rounded-xl p-4 border border-slate-800/80 flex flex-col items-center justify-center">
+      {/* 3. SVG GRAPH CANVAS */}
+      <div className="w-full bg-slate-900/80 rounded-2xl p-4 sm:p-5 border border-slate-800/90 flex flex-col items-center justify-center relative overflow-hidden">
         {/* 1. LINE GRAPH */}
-        {chart.type === 'line' && (
-          <div className="w-full max-w-xl">
-            <svg viewBox="0 0 500 220" className="w-full h-auto overflow-visible">
-              {/* Grid Lines */}
-              {[0, 20, 40, 60, 80].map((yVal, idx) => {
-                const yPos = 180 - (yVal * 1.8);
-                return (
-                  <g key={idx}>
-                    <line x1="40" y1={yPos} x2="480" y2={yPos} stroke="#334155" strokeDasharray="3,3" strokeWidth="1" />
-                    <text x="32" y={yPos + 4} fill="#64748b" fontSize="10" textAnchor="end" fontFamily="monospace">{yVal}%</text>
-                  </g>
-                );
-              })}
+        {chart.type === 'line' && (() => {
+          const allValues = (chart.series || []).flatMap(s => s.values || []);
+          const dataMax = allValues.length > 0 ? Math.max(...allValues) : 100;
+          
+          let maxScale = 100;
+          let step = 20;
+          if (dataMax <= 25) { maxScale = 25; step = 5; }
+          else if (dataMax <= 50) { maxScale = 50; step = 10; }
+          else if (dataMax <= 100) { maxScale = 100; step = 20; }
+          else if (dataMax <= 200) { maxScale = 200; step = 40; }
+          else { maxScale = Math.ceil(dataMax / 50) * 50; step = maxScale / 5; }
 
-              {/* X Axis Years */}
-              {chart.years && chart.years.map((yr, idx) => {
-                const xPos = 60 + idx * 80;
-                return (
-                  <text key={idx} x={xPos} y="205" fill="#94a3b8" fontSize="10" textAnchor="middle" fontFamily="monospace">
-                    {yr}
+          const yTicks = [];
+          for (let v = 0; v <= maxScale; v += step) {
+            yTicks.push(v);
+          }
+
+          const svgWidth = 540;
+          const svgHeight = 250;
+          const padLeft = 60;
+          const padRight = 35;
+          const padTop = 30;
+          const padBottom = 45;
+
+          const plotW = svgWidth - padLeft - padRight;
+          const plotH = svgHeight - padTop - padBottom;
+          const plotBottom = svgHeight - padBottom;
+
+          const getY = (val) => plotBottom - (val / maxScale) * plotH;
+          const xLabels = chart.years || (chart.series?.[0]?.values || []).map((_, i) => `T${i + 1}`);
+          const numPoints = xLabels.length;
+          const getX = (idx) => padLeft + (idx / Math.max(numPoints - 1, 1)) * plotW;
+
+          return (
+            <div className="w-full max-w-2xl">
+              <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
+                {/* Horizontal Grid lines & Y Axis Labels */}
+                {yTicks.map((yVal, idx) => {
+                  const yPos = getY(yVal);
+                  return (
+                    <g key={idx}>
+                      <line x1={padLeft - 5} y1={yPos} x2={svgWidth - padRight} y2={yPos} stroke="#334155" strokeDasharray="3,3" strokeWidth="1" />
+                      <text x={padLeft - 12} y={yPos + 4} fill="#94a3b8" fontSize="10" textAnchor="end" fontFamily="monospace">
+                        {yVal}{chart.unit === '%' || (!chart.unit && maxScale <= 100) ? '%' : ''}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* X Axis Line */}
+                <line x1={padLeft - 5} y1={plotBottom} x2={svgWidth - padRight} y2={plotBottom} stroke="#475569" strokeWidth="1.5" />
+
+                {/* X Axis Labels */}
+                {xLabels.map((label, idx) => (
+                  <text key={idx} x={getX(idx)} y={plotBottom + 22} fill="#cbd5e1" fontSize="11" textAnchor="middle" fontFamily="monospace" fontWeight="500">
+                    {label}
                   </text>
-                );
-              })}
+                ))}
 
-              {/* Series Lines */}
-              {chart.series && chart.series.map((s, sIdx) => {
-                const points = s.values.map((v, i) => `${60 + i * 80},${180 - (v * 1.8)}`).join(' ');
-                return (
-                  <g key={sIdx}>
-                    <polyline fill="none" stroke={s.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={points} />
-                    {s.values.map((v, i) => (
-                      <circle key={i} cx={60 + i * 80} cy={180 - (v * 1.8)} r="4" fill={s.color} stroke="#0f172a" strokeWidth="1.5" />
-                    ))}
-                  </g>
-                );
-              })}
-            </svg>
+                {/* Series Lines and Value Dots */}
+                {chart.series && chart.series.map((s, sIdx) => {
+                  const points = s.values.map((v, i) => `${getX(i)},${getY(v)}`).join(' ');
+                  return (
+                    <g key={sIdx}>
+                      <polyline fill="none" stroke={s.color} strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" points={points} />
+                      {s.values.map((v, i) => {
+                        const cx = getX(i);
+                        const cy = getY(v);
+                        return (
+                          <g key={i}>
+                            <circle cx={cx} cy={cy} r="5" fill={s.color} stroke="#0f172a" strokeWidth="2" />
+                            <text x={cx} y={cy - 9} fill={s.color} fontSize="10" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
+                              {v}
+                            </text>
+                          </g>
+                        );
+                      })}
+                    </g>
+                  );
+                })}
+              </svg>
 
-            {/* Legend */}
-            <div className="flex justify-center gap-4 mt-3 pt-2 border-t border-slate-800">
-              {chart.series && chart.series.map((s, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-xs">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
-                  <span className="text-slate-300 font-semibold">{s.name}</span>
-                </div>
-              ))}
+              {/* Legend */}
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-3 pt-3 border-t border-slate-800/80">
+                {chart.series && chart.series.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <span className="w-3 h-3 rounded-full" style={{ backgroundColor: s.color }} />
+                    <span className="text-slate-200 font-semibold">{s.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* 2. BAR CHART */}
-        {chart.type === 'bar' && (
-          <div className="w-full max-w-xl">
-            <svg viewBox="0 0 500 200" className="w-full h-auto">
-              {/* Horizontal Grid lines */}
-              {[0, 25, 50, 75].map((val, idx) => {
-                const yPos = 160 - (val * 1.8);
-                return (
-                  <line key={idx} x1="40" y1={yPos} x2="480" y2={yPos} stroke="#334155" strokeDasharray="3,3" strokeWidth="1" />
-                );
-              })}
+        {chart.type === 'bar' && (() => {
+          const allValues = (chart.series || []).flatMap(s => s.values || []);
+          const dataMax = allValues.length > 0 ? Math.max(...allValues) : 100;
+          
+          let maxScale = 100;
+          let step = 25;
+          if (dataMax <= 50) { maxScale = 50; step = 10; }
+          else if (dataMax <= 100) { maxScale = 100; step = 20; }
+          else { maxScale = Math.ceil(dataMax / 50) * 50; step = maxScale / 5; }
 
-              {/* Bars per Category */}
-              {chart.categories && chart.categories.map((cat, cIdx) => {
-                const groupX = 60 + cIdx * 105;
-                return (
-                  <g key={cIdx}>
-                    {chart.series.map((s, sIdx) => {
-                      const barVal = s.values[cIdx];
-                      const barHeight = barVal * 1.8;
-                      const barX = groupX + (sIdx * 24);
-                      const barY = 160 - barHeight;
-                      return (
-                        <g key={sIdx}>
-                          <rect x={barX} y={barY} width="20" height={barHeight} fill={s.color} rx="3" />
-                          <text x={barX + 10} y={barY - 4} fill={s.color} fontSize="9" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
-                            {barVal}
-                          </text>
-                        </g>
-                      );
-                    })}
-                    <text x={groupX + (chart.series.length * 12)} y="180" fill="#94a3b8" fontSize="10" textAnchor="middle">
-                      {cat}
-                    </text>
-                  </g>
-                );
-              })}
-            </svg>
+          const yTicks = [];
+          for (let v = 0; v <= maxScale; v += step) yTicks.push(v);
 
-            {/* Legend */}
-            <div className="flex justify-center gap-4 mt-2">
-              {chart.series.map((s, i) => (
-                <div key={i} className="flex items-center gap-1.5 text-xs">
-                  <span className="w-3 h-3 rounded" style={{ backgroundColor: s.color }} />
-                  <span className="text-slate-300 font-semibold">{s.name}</span>
-                </div>
-              ))}
+          const svgWidth = 540;
+          const svgHeight = 250;
+          const padLeft = 55;
+          const padRight = 30;
+          const padTop = 30;
+          const padBottom = 45;
+
+          const plotW = svgWidth - padLeft - padRight;
+          const plotH = svgHeight - padTop - padBottom;
+          const plotBottom = svgHeight - padBottom;
+          const getY = (val) => plotBottom - (val / maxScale) * plotH;
+
+          const numCats = (chart.categories || []).length;
+          const groupWidth = plotW / Math.max(numCats, 1);
+          const numSeries = (chart.series || []).length;
+          const barW = Math.min(28, (groupWidth - 20) / Math.max(numSeries, 1));
+
+          return (
+            <div className="w-full max-w-2xl">
+              <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full h-auto">
+                {/* Horizontal Grid lines */}
+                {yTicks.map((val, idx) => {
+                  const yPos = getY(val);
+                  return (
+                    <g key={idx}>
+                      <line x1={padLeft - 5} y1={yPos} x2={svgWidth - padRight} y2={yPos} stroke="#334155" strokeDasharray="3,3" strokeWidth="1" />
+                      <text x={padLeft - 10} y={yPos + 4} fill="#94a3b8" fontSize="10" textAnchor="end" fontFamily="monospace">
+                        {val}{chart.unit === '%' || (!chart.unit && maxScale <= 100) ? '%' : ''}
+                      </text>
+                    </g>
+                  );
+                })}
+
+                {/* X Axis Line */}
+                <line x1={padLeft - 5} y1={plotBottom} x2={svgWidth - padRight} y2={plotBottom} stroke="#475569" strokeWidth="1.5" />
+
+                {/* Bars per Category */}
+                {chart.categories && chart.categories.map((cat, cIdx) => {
+                  const groupCenterX = padLeft + (cIdx + 0.5) * groupWidth;
+                  return (
+                    <g key={cIdx}>
+                      {chart.series.map((s, sIdx) => {
+                        const barVal = s.values[cIdx] || 0;
+                        const barHeight = Math.max(2, (barVal / maxScale) * plotH);
+                        const barOffset = (sIdx - (numSeries - 1) / 2) * (barW + 4);
+                        const barX = groupCenterX + barOffset - (barW / 2);
+                        const barY = plotBottom - barHeight;
+
+                        return (
+                          <g key={sIdx}>
+                            <rect x={barX} y={barY} width={barW} height={barHeight} fill={s.color} rx="4" />
+                            <text x={barX + barW / 2} y={barY - 5} fill={s.color} fontSize="9" textAnchor="middle" fontWeight="bold" fontFamily="monospace">
+                              {barVal}
+                            </text>
+                          </g>
+                        );
+                      })}
+                      <text x={groupCenterX} y={plotBottom + 22} fill="#cbd5e1" fontSize="11" textAnchor="middle" fontWeight="500">
+                        {cat}
+                      </text>
+                    </g>
+                  );
+                })}
+              </svg>
+
+              {/* Legend */}
+              <div className="flex flex-wrap items-center justify-center gap-4 mt-3 pt-3 border-t border-slate-800/80">
+                {chart.series && chart.series.map((s, i) => (
+                  <div key={i} className="flex items-center gap-2 text-xs bg-slate-950/60 px-3 py-1.5 rounded-lg border border-slate-800">
+                    <span className="w-3 h-3 rounded" style={{ backgroundColor: s.color }} />
+                    <span className="text-slate-200 font-semibold">{s.name}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* 3. PIE CHART */}
-        {chart.type === 'pie' && (
-          <div className="w-full max-w-md flex flex-col sm:flex-row items-center justify-around gap-4">
-            <svg viewBox="0 0 160 160" className="w-36 h-36">
-              {/* Dynamic SVG donut / circle approximation */}
-              <circle cx="80" cy="80" r="60" fill="#1e293b" />
-              {/* Visual slices placeholder presentation */}
-              <circle cx="80" cy="80" r="50" fill="transparent" stroke="#ef4444" strokeWidth="24" strokeDasharray="106 208" strokeDashoffset="0" />
-              <circle cx="80" cy="80" r="50" fill="transparent" stroke="#f59e0b" strokeWidth="24" strokeDasharray="81 233" strokeDashoffset="-106" />
-              <circle cx="80" cy="80" r="50" fill="transparent" stroke="#3b82f6" strokeWidth="24" strokeDasharray="56 258" strokeDashoffset="-187" />
-              <circle cx="80" cy="80" r="50" fill="transparent" stroke="#10b981" strokeWidth="24" strokeDasharray="44 270" strokeDashoffset="-243" />
-              <circle cx="80" cy="80" r="50" fill="transparent" stroke="#94a3b8" strokeWidth="24" strokeDasharray="25 289" strokeDashoffset="-287" />
-            </svg>
-            <div className="space-y-1.5 text-xs">
-              {chart.slices && chart.slices.map((sl, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <span className="w-3 h-3 rounded-full" style={{ backgroundColor: sl.color }} />
-                  <span className="text-slate-200">{sl.label}:</span>
-                  <span className="font-bold text-white font-mono">{sl.value}%</span>
+        {chart.type === 'pie' && (() => {
+          const slices = chart.slices || [];
+          const total = slices.reduce((sum, s) => sum + (s.value || 0), 0) || 100;
+          const radius = 55;
+          const circ = 2 * Math.PI * radius;
+          let accumPercent = 0;
+
+          return (
+            <div className="w-full max-w-xl flex flex-col sm:flex-row items-center justify-around gap-6 py-2">
+              <div className="relative flex items-center justify-center">
+                <svg viewBox="0 0 160 160" className="w-44 h-44 -rotate-90">
+                  <circle cx="80" cy="80" r={radius} fill="#0f172a" />
+                  {slices.map((sl, i) => {
+                    const pct = (sl.value || 0) / total;
+                    const strokeLen = pct * circ;
+                    const strokeOffset = -accumPercent * circ;
+                    accumPercent += pct;
+
+                    return (
+                      <circle
+                        key={i}
+                        cx="80"
+                        cy="80"
+                        r={radius}
+                        fill="transparent"
+                        stroke={sl.color}
+                        strokeWidth="24"
+                        strokeDasharray={`${strokeLen} ${circ - strokeLen}`}
+                        strokeDashoffset={strokeOffset}
+                        className="transition-all duration-300 hover:opacity-80"
+                      />
+                    );
+                  })}
+                </svg>
+                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+                  <span className="text-[10px] text-slate-400 font-medium">TOTAL</span>
+                  <span className="text-xs font-bold font-mono text-white">100%</span>
                 </div>
-              ))}
+              </div>
+
+              <div className="space-y-2 text-xs sm:text-sm w-full max-w-xs">
+                {slices.map((sl, i) => (
+                  <div key={i} className="flex items-center justify-between p-2 rounded-xl bg-slate-950/70 border border-slate-800">
+                    <div className="flex items-center gap-2">
+                      <span className="w-3.5 h-3.5 rounded-full flex-shrink-0" style={{ backgroundColor: sl.color }} />
+                      <span className="text-slate-200 font-medium">{sl.label}</span>
+                    </div>
+                    <span className="font-bold text-white font-mono bg-slate-800/80 px-2 py-0.5 rounded-md text-xs">
+                      {sl.value}%
+                    </span>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* 4. PROCESS DIAGRAM */}
         {chart.type === 'process' && (
-          <div className="w-full max-w-xl space-y-2">
-            <div className="flex flex-wrap items-center justify-center gap-2">
+          <div className="w-full max-w-2xl py-2 space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {chart.steps && chart.steps.map((st, i) => (
-                <React.Fragment key={i}>
-                  <div className="px-3 py-2 rounded-xl bg-slate-950 border border-indigo-500/40 text-center">
-                    <span className="text-[11px] font-bold text-indigo-300 block">{st}</span>
+                <div key={i} className="relative flex items-start gap-3 p-3.5 rounded-xl bg-slate-950/90 border border-indigo-500/40 shadow-sm">
+                  <div className="w-6 h-6 rounded-lg bg-indigo-500/20 border border-indigo-500/50 flex items-center justify-center flex-shrink-0 text-[11px] font-bold text-indigo-300">
+                    {i + 1}
                   </div>
-                  {i < chart.steps.length - 1 && (
-                    <span className="text-indigo-400 font-bold text-sm">➔</span>
-                  )}
-                </React.Fragment>
+                  <p className="text-xs font-semibold text-slate-200 leading-relaxed">
+                    {st.replace(/^\d+\.\s*/, '')}
+                  </p>
+                </div>
               ))}
             </div>
           </div>
@@ -187,20 +313,32 @@ function VisualChartDisplay({ chart }) {
 
         {/* 5. MAP COMPARISON */}
         {chart.type === 'map' && (
-          <div className="w-full max-w-xl grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
-            <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-              <span className="font-bold text-amber-400 block mb-2">Peta Sebelum / Awal (1995):</span>
-              <ul className="space-y-1 text-slate-300">
+          <div className="w-full max-w-2xl grid grid-cols-1 md:grid-cols-2 gap-4 text-xs py-2">
+            <div className="p-4 rounded-xl bg-slate-950/90 border border-amber-500/40 shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b border-amber-500/20 pb-2">
+                <span className="font-bold text-amber-400 text-sm">Fase 1: Peta Sebelum (Awal)</span>
+                <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-300 text-[10px] font-mono">Sebelumnya</span>
+              </div>
+              <ul className="space-y-2 text-slate-300">
                 {chart.zones && chart.zones.map((z, i) => (
-                  <li key={i} className="text-[11px]">• {z.split('->')[0]}</li>
+                  <li key={i} className="flex items-start gap-2 text-xs">
+                    <span className="text-amber-400 font-bold">•</span>
+                    <span>{z.split('->')[0].trim()}</span>
+                  </li>
                 ))}
               </ul>
             </div>
-            <div className="p-3 rounded-xl bg-slate-950 border border-emerald-500/40">
-              <span className="font-bold text-emerald-400 block mb-2">Peta Transformasi (2025):</span>
-              <ul className="space-y-1 text-slate-200">
+            <div className="p-4 rounded-xl bg-slate-950/90 border border-emerald-500/40 shadow-sm space-y-3">
+              <div className="flex items-center justify-between border-b border-emerald-500/20 pb-2">
+                <span className="font-bold text-emerald-400 text-sm">Fase 2: Transformasi (Modernisasi)</span>
+                <span className="px-2 py-0.5 rounded bg-emerald-500/20 text-emerald-300 text-[10px] font-mono">Hasil Desain</span>
+              </div>
+              <ul className="space-y-2 text-slate-200">
                 {chart.zones && chart.zones.map((z, i) => (
-                  <li key={i} className="text-[11px] font-medium text-emerald-300">• {z.split('->')[1] || z}</li>
+                  <li key={i} className="flex items-start gap-2 text-xs">
+                    <span className="text-emerald-400 font-bold">✓</span>
+                    <span className="font-medium text-emerald-300">{z.split('->')[1]?.trim() || z}</span>
+                  </li>
                 ))}
               </ul>
             </div>
