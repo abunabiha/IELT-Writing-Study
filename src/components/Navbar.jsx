@@ -70,6 +70,14 @@ export default function Navbar({
       icon: '⚡',
       items: [
         {
+          id: 'vocabMaster',
+          name: 'Vocab Memory Vault',
+          shortName: 'Vocab Vault',
+          icon: '🧠',
+          badge: 'Mnemonic',
+          desc: 'Bank kosakata 8 topik IELTS dengan teknik memori anti-lupa'
+        },
+        {
           id: 'sentenceLab',
           name: 'Sentence Transformer',
           shortName: 'Transformer',

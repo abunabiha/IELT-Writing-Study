@@ -4,6 +4,7 @@ import SkillTree from './components/SkillTree';
 import BeginnerSentencePuzzle from './components/drills/BeginnerSentencePuzzle';
 import SentenceTransformerGame from './components/drills/SentenceTransformerGame';
 import CollocationDrill from './components/drills/CollocationDrill';
+import VocabMemoryVault from './components/drills/VocabMemoryVault';
 import Task1ChartLab from './components/simulator/Task1ChartLab';
 import GeneralTrainingLetterLab from './components/simulator/GeneralTrainingLetterLab';
 import Task2EssayBuilder from './components/simulator/Task2EssayBuilder';
@@ -145,6 +146,14 @@ export default function App() {
         {/* TAB: Sentence Transformer */}
         {activeTab === 'sentenceLab' && (
           <SentenceTransformerGame
+            xp={xp}
+            onAddXp={handleAddXp}
+          />
+        )}
+
+        {/* TAB: Vocab Memory Vault (Band 8 Lexical Master) */}
+        {activeTab === 'vocabMaster' && (
+          <VocabMemoryVault
             xp={xp}
             onAddXp={handleAddXp}
           />
