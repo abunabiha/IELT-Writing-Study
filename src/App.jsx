@@ -135,6 +135,13 @@ export default function App() {
           />
         )}
 
+        {/* TAB: Literasi Writing & Grammar */}
+        {activeTab === 'writingLiteracy' && (
+          <WritingGrammarLiteracy
+            onAddXp={handleAddXp}
+          />
+        )}
+
         {/* TAB: Skill Tree */}
         {activeTab === 'skillTree' && (
           <SkillTree
@@ -143,6 +150,14 @@ export default function App() {
             completedDrills={completedDrills}
             onCompleteDrill={handleCompleteDrill}
             onNavigateTab={setActiveTab}
+          />
+        )}
+
+        {/* TAB: Mind Map Kosakata 3 Lapis */}
+        {activeTab === 'mindMapVault' && (
+          <VocabMindMap3Lapis
+            xp={xp}
+            onAddXp={handleAddXp}
           />
         )}
 
@@ -160,6 +175,7 @@ export default function App() {
             xp={xp}
             onAddXp={handleAddXp}
             geminiApiKey={geminiApiKey}
+            onNavigateTab={setActiveTab}
           />
         )}
 

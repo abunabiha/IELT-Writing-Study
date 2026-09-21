@@ -24,7 +24,7 @@ const TOPIC_ICONS = {
   Landmark: Landmark
 };
 
-export default function VocabMemoryVault({ xp, onAddXp, geminiApiKey }) {
+export default function VocabMemoryVault({ xp, onAddXp, geminiApiKey, onNavigateTab }) {
   // View mode: 'curated' (8 Topik Mendalam) vs 'corpus6000' (Korpus 6.000 Kata / 300 Set)
   const [viewMode, setViewMode] = useState('curated');
   const [activeTopicId, setActiveTopicId] = useState('environment');
@@ -289,6 +289,15 @@ export default function VocabMemoryVault({ xp, onAddXp, geminiApiKey }) {
               <BookOpen className="w-3.5 h-3.5" />
               <span>Korpus 6.000 Kata</span>
             </button>
+            {onNavigateTab && (
+              <button
+                onClick={() => { soundFx.playClick(); onNavigateTab('mindMapVault'); }}
+                className="px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-950/40"
+              >
+                <span>🌿</span>
+                <span>Mind Map 3 Lapis</span>
+              </button>
+            )}
           </div>
         </div>
       </div>
