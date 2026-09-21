@@ -1,28 +1,47 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Sparkles, Clock, AlertTriangle, CheckCircle2, 
-  Send, RefreshCw, BookOpen, Layers, BarChart, ChevronDown, 
-  ChevronUp, Bot, FileText, Award 
+  RefreshCw, BookOpen, Bot, BookmarkCheck 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { IELTS_SAMPLE_PROMPTS } from '../../data/curriculumData';
+import { IELTS_TASK2_PROMPTS, TASK2_QUESTION_TYPES } from '../../data/ieltsTask2Data';
 import { analyzeBand8Text } from '../../utils/band8Analyzer';
 import { evaluateEssayWithGemini } from '../../utils/geminiApi';
+import { saveExamRecord } from '../../utils/gradeBookStorage';
 import { soundFx } from '../../utils/soundEffects';
 
 export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
-  const [selectedPromptIdx, setSelectedPromptIdx] = useState(0);
+  const [selectedTypeFilter, setSelectedTypeFilter] = useState('Semua Tipe Soal');
+  const [selectedPromptId, setSelectedPromptId] = useState(IELTS_TASK2_PROMPTS[0].id);
   const [essayText, setEssayText] = useState('');
   const [timerSeconds, setTimerSeconds] = useState(40 * 60); // 40 minutes standard exam
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [showModelAnswer, setShowModelAnswer] = useState(false);
   const [showPeelGuide, setShowPeelGuide] = useState(true);
-  const [activeTab, setActiveTab] = useState('diagnostics'); // 'diagnostics' | 'aiFeedback' | 'peel'
+  const [activeTab, setActiveTab] = useState('diagnostics'); // 'diagnostics' | 'aiFeedback' | 'peel' | 'collocations'
   const [isAiLoading, setIsAiLoading] = useState(false);
   const [aiResult, setAiResult] = useState(null);
   const [aiError, setAiError] = useState(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const promptObj = IELTS_SAMPLE_PROMPTS[selectedPromptIdx];
+  // Filter prompts by question type
+  const filteredPrompts = useMemo(() => {
+    if (selectedTypeFilter === 'Semua Tipe Soal') return IELTS_TASK2_PROMPTS;
+    return IELTS_TASK2_PROMPTS.filter(p => p.questionType === selectedTypeFilter);
+  }, [selectedTypeFilter]);
+
+  const promptObj = useMemo(() => {
+    return IELTS_TASK2_PROMPTS.find(p => p.id === selectedPromptId) || filteredPrompts[0] || IELTS_TASK2_PROMPTS[0];
+  }, [selectedPromptId, filteredPrompts]);
+
+  // Keep selected prompt valid when filter changes
+  useEffect(() => {
+    if (!filteredPrompts.some(p => p.id === selectedPromptId)) {
+      if (filteredPrompts.length > 0) {
+        setSelectedPromptId(filteredPrompts[0].id);
+      }
+    }
+  }, [selectedTypeFilter, filteredPrompts, selectedPromptId]);
 
   // Timer Countdown
   useEffect(() => {
@@ -82,10 +101,10 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
         });
         setAiResult(result);
         soundFx.playLevelUp();
-        onAddXp(200);
+        if (onAddXp) onAddXp(200);
         confetti({ particleCount: 90, spread: 70 });
       } else {
-        // High quality simulated AI assessment based on heuristic rubrics
+        // Heuristic AI simulation
         setTimeout(() => {
           setAiResult({
             bandScores: {
@@ -110,23 +129,50 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
             }))
           });
           setIsAiLoading(false);
-          soundFx.playCorrect();
-          onAddXp(150);
+          soundFx.playSuccess();
+          if (onAddXp) onAddXp(150);
+          confetti({ particleCount: 90, spread: 70 });
         }, 1200);
         return;
       }
     } catch (err) {
-      setAiError(err.message);
-      soundFx.playWrong();
+      console.error(err);
+      setAiError('Gagal memproses evaluasi AI. Silakan coba kembali.');
     } finally {
       setIsAiLoading(false);
     }
   };
 
+  const handleSaveToGradeBook = () => {
+    soundFx.playSuccess();
+    const finalBand = aiResult?.bandScores?.overall || analysis.overallBand || 7.0;
+
+    const record = {
+      date: new Date().toISOString().split('T')[0],
+      type: 'Task 2 Essay',
+      title: `${promptObj.questionType}: ${promptObj.title || promptObj.topic}`,
+      taskResponse: aiResult?.bandScores?.taskResponse || analysis.taskScore || finalBand,
+      coherenceCohesion: aiResult?.bandScores?.coherenceCohesion || analysis.cohesionScore || finalBand,
+      lexicalResource: aiResult?.bandScores?.lexicalResource || analysis.lexicalScore || finalBand,
+      grammaticalRange: aiResult?.bandScores?.grammaticalRange || analysis.grammarScore || finalBand,
+      overallBand: finalBand,
+      wordCount: analysis.wordCount,
+      timeSpentMin: Math.max(1, Math.round((40 * 60 - timerSeconds) / 60)),
+      feedbackEn: aiResult?.examinerSummary || `Task 2 essay simulation completed on topic: ${promptObj.topic}. Word count: ${analysis.wordCount}.`,
+      feedbackId: `Simulasi esai Task 2 selesai untuk topik ${promptObj.title || promptObj.topic}. Panjang esai: ${analysis.wordCount}/250 kata.`
+    };
+
+    saveExamRecord(record);
+    setSaveSuccess(true);
+    confetti({ particleCount: 100, spread: 70 });
+    if (onAddXp) onAddXp(200);
+    setTimeout(() => setSaveSuccess(false), 4000);
+  };
+
   return (
-    <div className="max-w-7xl mx-auto space-y-6 pb-12">
-      {/* Top Header & Exam Timer */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-lg">
+    <div className="max-w-6xl mx-auto space-y-6 pb-12">
+      {/* Header Bar */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900/90 border border-slate-800 p-5 rounded-3xl shadow-xl">
         <div>
           <div className="flex items-center gap-2">
             <span className="p-1.5 rounded-xl bg-purple-500/20 text-purple-400">
@@ -135,7 +181,7 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
             <h2 className="text-xl font-bold text-white">IELTS Task 2 Writing Arena</h2>
           </div>
           <p className="text-slate-400 text-xs mt-1">
-            Sandbox simulasi ujian resmi dengan live Band 8 diagnostic rubric & feedback AI examiner.
+            Simulasi resmi 5 format esai IELTS: Opinion, Discussion, Problem-Solution, Advantages-Disadvantages, & Double Question.
           </p>
         </div>
 
@@ -172,12 +218,82 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
         </div>
       </div>
 
-      {/* Question Prompt Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-3">
-        <div className="flex items-center justify-between">
-          <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs font-bold uppercase tracking-wider">
-            {promptObj.category}
+      {/* Question Type Filter Bar */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-slate-800 pb-2.5 text-xs">
+          <span className="font-bold text-slate-300">Filter Format Pertanyaan Resmi IELTS:</span>
+          <span className="text-slate-400 font-mono">
+            {filteredPrompts.length} Soal Tersedia
           </span>
+        </div>
+
+        <div className="flex flex-wrap gap-1.5">
+          {TASK2_QUESTION_TYPES.map((qType) => (
+            <button
+              key={qType}
+              onClick={() => {
+                soundFx.playClick();
+                setSelectedTypeFilter(qType);
+                setShowModelAnswer(false);
+                setAiResult(null);
+              }}
+              className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition ${
+                selectedTypeFilter === qType
+                  ? 'bg-purple-600 text-white shadow-md'
+                  : 'bg-slate-950 text-slate-400 hover:text-white border border-slate-800'
+              }`}
+            >
+              {qType}
+            </button>
+          ))}
+        </div>
+
+        {/* Prompt Selector Pills */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
+          {filteredPrompts.map((p) => {
+            const isSelected = promptObj.id === p.id;
+            return (
+              <button
+                key={p.id}
+                onClick={() => {
+                  soundFx.playClick();
+                  setSelectedPromptId(p.id);
+                  setShowModelAnswer(false);
+                  setAiResult(null);
+                  setSaveSuccess(false);
+                }}
+                className={`p-3 rounded-2xl text-left border transition text-xs ${
+                  isSelected
+                    ? 'bg-purple-950/40 border-purple-500 text-white ring-1 ring-purple-500 shadow-md'
+                    : 'bg-slate-950 border-slate-800 text-slate-400 hover:border-slate-700 hover:text-slate-200'
+                }`}
+              >
+                <div className="text-[10px] font-bold text-purple-400 uppercase tracking-wider truncate">
+                  {p.questionType}
+                </div>
+                <div className="font-bold text-slate-100 mt-1 line-clamp-1">
+                  {p.title || p.topic}
+                </div>
+                <div className="text-[11px] text-slate-500 mt-0.5 line-clamp-2">
+                  {p.question}
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Question Prompt Card */}
+      <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 space-y-4 shadow-xl">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-300 border border-indigo-500/20 text-xs font-bold uppercase tracking-wider">
+              {promptObj.questionType}
+            </span>
+            <span className="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-xs font-semibold">
+              Topik: {promptObj.topic}
+            </span>
+          </div>
           <button
             onClick={() => setShowModelAnswer(!showModelAnswer)}
             className="text-xs text-indigo-400 hover:text-indigo-300 font-semibold flex items-center gap-1"
@@ -242,279 +358,222 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
                 Paragraf: <b className="text-slate-200">{analysis.paragraphCount}</b>
               </span>
             </div>
-
-            {/* Word count progress mini-bar */}
-            <div className="w-32 h-2 bg-slate-800 rounded-full overflow-hidden">
-              <div 
-                className={`h-full transition-all duration-300 rounded-full ${
-                  analysis.wordCount >= 250 ? 'bg-emerald-500' : 'bg-amber-500'
-                }`}
-                style={{ width: `${Math.min(100, (analysis.wordCount / 250) * 100)}%` }}
-              />
+            <div className="flex items-center gap-2">
+              <button
+                onClick={handleSaveToGradeBook}
+                disabled={analysis.wordCount < 50}
+                className="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold border border-slate-700 transition disabled:opacity-40 flex items-center gap-1.5"
+              >
+                <BookmarkCheck className="w-3.5 h-3.5 text-purple-400" />
+                <span>Simpan Nilai ke Buku Nilai</span>
+              </button>
             </div>
           </div>
 
-          {/* Textarea Canvas */}
-          <div className="relative flex-1">
-            <textarea
-              value={essayText}
-              onChange={(e) => setEssayText(e.target.value)}
-              placeholder="Tulis esai Anda di sini... Mulai dengan Paragraf 1 (Paraphrase & Tesis), diikuti Body 1 (PEEL), Body 2 (PEEL), dan Kesimpulan..."
-              rows={18}
-              className="w-full p-5 rounded-3xl bg-slate-900 border border-slate-800 text-slate-100 font-sans text-sm sm:text-base leading-relaxed focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20 resize-none transition shadow-inner placeholder:text-slate-600"
-            />
-          </div>
+          {/* Text Area */}
+          <textarea
+            rows={14}
+            value={essayText}
+            onChange={(e) => setEssayText(e.target.value)}
+            placeholder="Tuliskan esai IELTS Task 2 Anda di sini... (Gunakan struktur 4 paragraf: Pendahuluan, Tubuh 1, Tubuh 2, Kesimpulan)"
+            className="w-full p-5 rounded-3xl bg-slate-900 border border-slate-800 text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500 text-sm font-serif leading-relaxed shadow-inner"
+          />
+
+          {saveSuccess && (
+            <div className="p-3.5 rounded-2xl bg-emerald-950/50 border border-emerald-500/40 text-emerald-300 text-xs font-semibold flex items-center gap-2">
+              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+              <span>Skor simulasi Task 2 berhasil disimpan ke Buku Nilai (GradeBook)!</span>
+            </div>
+          )}
+
+          {/* PEEL Paragraph Framework Helper */}
+          {promptObj.peelFramework && (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <span className="font-bold text-white">Outline Argumen Esai Ini:</span>
+                <span className="text-purple-400 font-semibold">Formula PEEL</span>
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-xs">
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-850">
+                  <span className="font-bold text-purple-400 block mb-0.5">Paragraf 1 (Intro):</span>
+                  <span className="text-slate-300">{promptObj.peelFramework.intro}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-850">
+                  <span className="font-bold text-blue-400 block mb-0.5">Paragraf 2 (Body 1):</span>
+                  <span className="text-slate-300">{promptObj.peelFramework.body1}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-850">
+                  <span className="font-bold text-emerald-400 block mb-0.5">Paragraf 3 (Body 2):</span>
+                  <span className="text-slate-300">{promptObj.peelFramework.body2}</span>
+                </div>
+                <div className="p-2.5 rounded-xl bg-slate-950 border border-slate-850">
+                  <span className="font-bold text-amber-400 block mb-0.5">Paragraf 4 (Kesimpulan):</span>
+                  <span className="text-slate-300">{promptObj.peelFramework.conclusion}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
         </div>
 
-        {/* Right Col (5 cols): Diagnostic Radar & Feedback Tabs */}
-        <div className="lg:col-span-5 space-y-4">
+        {/* Right Col (5 cols): Diagnostics & AI Examiner Panel */}
+        <div className="lg:col-span-5 flex flex-col space-y-4">
           
           {/* Diagnostic Tabs */}
-          <div className="flex items-center bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs font-semibold">
+          <div className="flex items-center gap-2 bg-slate-900 p-1.5 rounded-2xl border border-slate-800 text-xs">
             <button
               onClick={() => setActiveTab('diagnostics')}
-              className={`flex-1 py-2 rounded-xl transition ${
-                activeTab === 'diagnostics' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              className={`flex-1 py-2 rounded-xl font-bold transition ${
+                activeTab === 'diagnostics' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              📊 Live Rubrik
-            </button>
-            <button
-              onClick={() => setActiveTab('peel')}
-              className={`flex-1 py-2 rounded-xl transition ${
-                activeTab === 'peel' ? 'bg-indigo-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              🏗️ Metode PEEL
+              Live Rubrik
             </button>
             <button
               onClick={() => setActiveTab('aiFeedback')}
-              className={`flex-1 py-2 rounded-xl transition flex items-center justify-center gap-1.5 ${
-                activeTab === 'aiFeedback' ? 'bg-purple-600 text-white shadow-md' : 'text-slate-400 hover:text-white'
+              className={`flex-1 py-2 rounded-xl font-bold transition ${
+                activeTab === 'aiFeedback' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Bot className="w-3.5 h-3.5" />
-              <span>AI Examiner</span>
+              AI Feedback {aiResult && '✓'}
             </button>
+            {promptObj.academicCollocations && (
+              <button
+                onClick={() => setActiveTab('collocations')}
+                className={`flex-1 py-2 rounded-xl font-bold transition ${
+                  activeTab === 'collocations' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                Kolokasi Kunci
+              </button>
+            )}
           </div>
 
-          {/* TAB 1: Real-time Rubric Diagnostics */}
+          {/* TAB 1: Live Heuristic Rubrics */}
           {activeTab === 'diagnostics' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-5 shadow-lg">
-              
-              {/* Overall Estimated Band Meter */}
-              <div className="p-4 rounded-2xl bg-slate-950 border border-slate-800 flex items-center justify-between">
-                <div>
-                  <div className="text-[11px] font-bold uppercase tracking-wider text-slate-400">
-                    Estimasi Band Score
-                  </div>
-                  <div className="text-2xl font-black text-white mt-0.5">
-                    Band {analysis.overallBand}
-                  </div>
-                </div>
-                <div className={`px-3 py-1 rounded-xl text-xs font-extrabold ${
-                  analysis.overallBand >= 8.0 
-                    ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' 
-                    : analysis.overallBand >= 6.5
-                      ? 'bg-amber-500/20 text-amber-300 border border-amber-500/30'
-                      : 'bg-rose-500/20 text-rose-300 border border-rose-500/30'
-                }`}>
-                  {analysis.overallBand >= 8.0 ? 'Mastery (Band 8+)' : analysis.overallBand >= 6.5 ? 'Competent' : 'Developing'}
-                </div>
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <span className="text-xs font-bold text-slate-300">Estimasi Band Saat Ini:</span>
+                <span className="text-xl font-extrabold font-mono text-emerald-400">
+                  Band {analysis.overallBand}
+                </span>
               </div>
 
-              {/* 4 Official Criteria Grid */}
-              <div className="grid grid-cols-2 gap-2.5">
+              {/* 4 Assessment Criteria */}
+              <div className="space-y-3">
                 {[
-                  { label: 'Task Response (TR)', score: analysis.taskScore, hint: 'Menjawab prompt & word count' },
-                  { label: 'Coherence & Cohesion (CC)', score: analysis.cohesionScore, hint: 'Alur logis & signposting' },
-                  { label: 'Lexical Resource (LR)', score: analysis.lexicalScore, hint: 'Kosakata C1/C2 akademis' },
-                  { label: 'Grammar Accuracy (GRA)', score: analysis.grammarScore, hint: 'Variasi kalimat kompleks' },
-                ].map((crit, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-slate-950/70 border border-slate-800/80">
-                    <div className="flex items-center justify-between text-xs font-bold text-slate-300">
-                      <span className="truncate">{crit.label.split('(')[0]}</span>
-                      <span className="text-indigo-400 font-extrabold">{crit.score}</span>
+                  { name: 'Task Response', score: analysis.taskScore, max: 9.0, desc: `${analysis.wordCount}/250 kata tercapai` },
+                  { name: 'Coherence & Cohesion', score: analysis.cohesionScore, max: 9.0, desc: `${analysis.paragraphCount} paragraf terstruktur` },
+                  { name: 'Lexical Resource', score: analysis.lexicalScore, max: 9.0, desc: `${analysis.academicWordMatches.length} kata akademik C1/C2` },
+                  { name: 'Grammatical Range', score: analysis.grammarScore, max: 9.0, desc: `${analysis.sentenceStructures.advanced} struktur kalimat kompleks` }
+                ].map((c) => (
+                  <div key={c.name} className="space-y-1">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-slate-300 font-semibold">{c.name}</span>
+                      <span className="font-mono text-indigo-400 font-bold">{c.score}</span>
                     </div>
-                    <div className="text-[10px] text-slate-500 mt-1 truncate">{crit.hint}</div>
+                    <div className="h-2 w-full bg-slate-950 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-gradient-to-r from-indigo-500 to-emerald-400 rounded-full transition-all duration-300"
+                        style={{ width: `${(c.score / 9.0) * 100}%` }}
+                      />
+                    </div>
+                    <div className="text-[10px] text-slate-500">{c.desc}</div>
                   </div>
                 ))}
               </div>
 
-              {/* Weak Words Alert */}
+              {/* Word suggestions */}
               {analysis.weakWordMatches.length > 0 && (
-                <div className="p-3.5 rounded-2xl bg-rose-950/30 border border-rose-500/20 space-y-2">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-rose-300">
-                    <AlertTriangle className="w-3.5 h-3.5 text-rose-400" />
-                    <span>Kata Lemah/Pasaran Terdeteksi ({analysis.weakWordMatches.length})</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1.5">
-                    {analysis.weakWordMatches.slice(0, 5).map((w, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded-lg bg-rose-900/40 text-rose-200 text-xs border border-rose-700/40">
-                        {w.word} ➔ <span className="text-emerald-300 font-semibold">{w.alternatives[0]}</span>
-                      </span>
+                <div className="pt-2 border-t border-slate-800 space-y-2">
+                  <span className="text-xs font-bold text-amber-400">Kata Kurang Formal Terdeteksi:</span>
+                  <div className="space-y-1 text-xs">
+                    {analysis.weakWordMatches.slice(0, 3).map((w, i) => (
+                      <div key={i} className="p-2 rounded-xl bg-slate-950 text-slate-300">
+                        <span className="text-rose-400 font-mono">"{w.word}"</span> → ganti dengan <span className="text-emerald-400 font-semibold">{w.alternatives.slice(0, 2).join(' / ')}</span>
+                      </div>
                     ))}
                   </div>
                 </div>
               )}
-
-              {/* Academic Words Detected */}
-              {analysis.academicWordMatches.length > 0 && (
-                <div className="p-3.5 rounded-2xl bg-emerald-950/30 border border-emerald-500/20 space-y-1.5">
-                  <div className="flex items-center gap-1.5 text-xs font-bold text-emerald-300">
-                    <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                    <span>Kosakata C1/C2 Terpakai:</span>
-                  </div>
-                  <div className="flex flex-wrap gap-1">
-                    {analysis.academicWordMatches.map((w, idx) => (
-                      <span key={idx} className="px-2 py-0.5 rounded-md bg-emerald-900/30 text-emerald-300 text-[11px] font-semibold">
-                        {w}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Sentence Complexity Distribution */}
-              <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
-                <div className="text-xs font-bold text-slate-300">Distribusi Struktur Kalimat:</div>
-                <div className="grid grid-cols-4 gap-1 text-center text-xs">
-                  <div className="p-1.5 rounded-lg bg-slate-900">
-                    <div className="text-[10px] text-slate-500">Simple</div>
-                    <div className="font-bold text-slate-300">{analysis.sentenceStructures.simple}</div>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-slate-900">
-                    <div className="text-[10px] text-slate-500">Compound</div>
-                    <div className="font-bold text-slate-300">{analysis.sentenceStructures.compound}</div>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-slate-900">
-                    <div className="text-[10px] text-slate-500">Complex</div>
-                    <div className="font-bold text-indigo-400">{analysis.sentenceStructures.complex}</div>
-                  </div>
-                  <div className="p-1.5 rounded-lg bg-slate-900">
-                    <div className="text-[10px] text-slate-500">Advanced</div>
-                    <div className="font-bold text-emerald-400">{analysis.sentenceStructures.advanced}</div>
-                  </div>
-                </div>
-              </div>
-
             </div>
           )}
 
-          {/* TAB 2: PEEL Method Guide */}
-          {activeTab === 'peel' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-indigo-400">
-                Formula Paragraf Tubuh (PEEL Architecture)
-              </h4>
-
-              <div className="space-y-3 text-xs">
-                <div className="p-3 rounded-2xl bg-slate-950 border border-indigo-500/30">
-                  <div className="font-bold text-indigo-300 mb-1">P - Point (Topic Sentence)</div>
-                  <p className="text-slate-400">Satu gagasan utama yang tegas, langsung menjawab aspek pertanyaan.</p>
-                  <p className="text-slate-300 italic mt-1 font-serif">Contoh: "Prime among the merits of automation is the eradication of laborious tasks."</p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-950 border border-purple-500/30">
-                  <div className="font-bold text-purple-300 mb-1">E - Explanation (Sebab-Akibat)</div>
-                  <p className="text-slate-400">Uraikan secara analitis mengapa dan bagaimana hal itu terjadi.</p>
-                  <p className="text-slate-300 italic mt-1 font-serif">Contoh: "By delegating repetitive duties to algorithmic systems, organizations diminish margin for error..."</p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-950 border border-pink-500/30">
-                  <div className="font-bold text-pink-300 mb-1">E - Example / Evidence (Bukti Konkret)</div>
-                  <p className="text-slate-400">Berikan contoh realistis dan terpercaya.</p>
-                  <p className="text-slate-300 italic mt-1 font-serif">Contoh: "A case in point is the logistics sector, where automated inventorying bolstered output..."</p>
-                </div>
-
-                <div className="p-3 rounded-2xl bg-slate-950 border border-emerald-500/30">
-                  <div className="font-bold text-emerald-300 mb-1">L - Link (Sintesis ke Tesis)</div>
-                  <p className="text-slate-400">Simpulkan kembali ke tesis dan tujuan esai.</p>
-                  <p className="text-slate-300 italic mt-1 font-serif">Contoh: "Consequently, technological integration acts as an imperative catalyst for efficiency."</p>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* TAB 3: AI Examiner Feedback */}
+          {/* TAB 2: AI Examiner Feedback */}
           {activeTab === 'aiFeedback' && (
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-purple-400 uppercase tracking-wider flex items-center gap-1.5">
-                  <Bot className="w-4 h-4" />
-                  <span>Senior Examiner Review</span>
-                </span>
-                {geminiApiKey ? (
-                  <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
-                    Powered by Gemini AI
-                  </span>
-                ) : (
-                  <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
-                    Built-in Diagnostic
-                  </span>
-                )}
-              </div>
-
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-4 shadow-xl">
               {isAiLoading && (
-                <div className="p-8 text-center space-y-3">
-                  <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin mx-auto" />
-                  <p className="text-xs text-slate-400">Sedang memeriksa esai sesuai standar penilaian resmi IELTS Band 8...</p>
+                <div className="py-12 text-center space-y-3">
+                  <Bot className="w-8 h-8 text-indigo-400 animate-bounce mx-auto" />
+                  <p className="text-xs text-slate-300">AI Examiner sedang memeriksa Task Response, Kohesi, Kosa Kata, dan Tata Bahasa Anda...</p>
                 </div>
               )}
 
-              {aiError && (
-                <div className="p-4 rounded-2xl bg-rose-950/40 border border-rose-500/40 text-xs text-rose-300">
-                  ⚠️ {aiError}
+              {!isAiLoading && !aiResult && (
+                <div className="py-10 text-center space-y-2 text-slate-400 text-xs">
+                  <Bot className="w-8 h-8 text-slate-600 mx-auto" />
+                  <p>Tuliskan esai minimal 100 kata dan klik tombol <b>"Uji Skor AI Examiner"</b> di kanan atas.</p>
                 </div>
               )}
 
-              {aiResult && !isAiLoading && (
-                <div className="space-y-4 text-xs">
-                  {/* Summary */}
-                  <div className="p-3.5 rounded-2xl bg-slate-950 border border-slate-800 text-slate-300 leading-relaxed">
-                    <b>Catatan Pemeriksa:</b> {aiResult.examinerSummary}
+              {!isAiLoading && aiResult && (
+                <div className="space-y-4">
+                  <div className="p-4 rounded-2xl bg-indigo-950/30 border border-indigo-500/30">
+                    <span className="text-xs font-bold text-indigo-300 block mb-1">Ringkasan Penguji (Examiner Summary):</span>
+                    <p className="text-xs text-slate-200 leading-relaxed">{aiResult.examinerSummary}</p>
                   </div>
 
-                  {/* Areas for Improvement */}
-                  {aiResult.areasForImprovement?.length > 0 && (
-                    <div className="space-y-1.5">
-                      <div className="font-bold text-amber-400">Rekomendasi Peningkatan Band 8:</div>
-                      {aiResult.areasForImprovement.map((sug, sIdx) => (
-                        <div key={sIdx} className="p-2.5 rounded-xl bg-amber-950/20 border border-amber-500/20 text-slate-300">
-                          • {sug}
-                        </div>
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-emerald-400">Kekuatan Esai:</span>
+                    <ul className="space-y-1 text-xs text-slate-300">
+                      {aiResult.strengths?.map((s, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="text-emerald-400">✓</span> <span>{s}</span>
+                        </li>
                       ))}
-                    </div>
-                  )}
+                    </ul>
+                  </div>
 
-                  {/* Upgrades */}
-                  {aiResult.sentenceUpgrades?.length > 0 && (
-                    <div className="space-y-2">
-                      <div className="font-bold text-indigo-300">Rekomendasi Upgrade Kalimat:</div>
-                      {aiResult.sentenceUpgrades.map((upg, uIdx) => (
-                        <div key={uIdx} className="p-3 rounded-xl bg-slate-950 border border-indigo-500/20 space-y-1">
-                          <div className="text-rose-300 line-through text-[11px]">{upg.original}</div>
-                          <div className="text-emerald-300 font-bold">{upg.band8Upgrade}</div>
-                          <div className="text-slate-500 text-[10px]">{upg.rationale}</div>
-                        </div>
+                  <div className="space-y-2">
+                    <span className="text-xs font-bold text-amber-400">Area yang Perlu Ditingkatkan:</span>
+                    <ul className="space-y-1 text-xs text-slate-300">
+                      {aiResult.areasForImprovement?.map((a, i) => (
+                        <li key={i} className="flex items-start gap-1.5">
+                          <span className="text-amber-400">•</span> <span>{a}</span>
+                        </li>
                       ))}
-                    </div>
-                  )}
+                    </ul>
+                  </div>
                 </div>
               )}
+            </div>
+          )}
 
-              {!aiResult && !isAiLoading && !aiError && (
-                <div className="p-8 text-center text-slate-500 text-xs">
-                  Klik tombol <b>"Uji Skor AI Examiner"</b> di atas untuk mendapatkan umpan balik mendalam terhadap tulisan Anda.
-                </div>
-              )}
+          {/* TAB 3: Key Collocations */}
+          {activeTab === 'collocations' && promptObj.academicCollocations && (
+            <div className="bg-slate-900 border border-slate-800 rounded-3xl p-5 space-y-3 shadow-xl">
+              <span className="text-xs font-bold text-purple-400 block">
+                Kolokasi Akademis Band 8+ untuk Topik Ini:
+              </span>
+              <div className="space-y-2">
+                {promptObj.academicCollocations.map((col, i) => (
+                  <div key={i} className="p-3 rounded-2xl bg-slate-950 border border-slate-800 text-xs space-y-0.5">
+                    <div className="font-bold text-emerald-400 font-mono">
+                      {col.term}
+                    </div>
+                    <div className="text-slate-400 text-[11px]">
+                      🇮🇩 {col.meaning}
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           )}
 
         </div>
 
       </div>
+
     </div>
   );
 }

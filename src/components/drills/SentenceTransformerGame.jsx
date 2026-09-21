@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sparkles, Zap, ArrowRight, CheckCircle2, XCircle, Trophy, HelpCircle, RefreshCw } from 'lucide-react';
+import { Sparkles, Zap, ArrowRight, CheckCircle2, XCircle, Trophy, HelpCircle } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { SENTENCE_TRANSFORMER_CHALLENGES } from '../../data/sentenceTransformerData';
 import { soundFx } from '../../utils/soundEffects';

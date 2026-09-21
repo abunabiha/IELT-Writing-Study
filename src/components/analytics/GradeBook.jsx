@@ -1,10 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
-  Trophy, Award, Target, CheckCircle2, TrendingUp, 
-  Printer, ArrowRight, BookOpen, Brain, Keyboard, 
-  Sparkles, Layers, ShieldCheck, Zap, AlertCircle, 
-  BarChart3, Compass, Check, Flame, PlusCircle, 
-  Trash2, FileText, Calendar, Clock, Edit3, X, RefreshCw
+  Award, Target, Printer, ArrowRight, BarChart3, 
+  Check, Flame, PlusCircle, Trash2, FileText, 
+  Calendar, Clock, X, RefreshCw
 } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
@@ -113,6 +111,18 @@ export default function GradeBook({
       console.error('Failed to load exam records from localStorage', e);
       setExamRecords(SAMPLE_EXAM_RECORDS);
     }
+
+    const handleExternalUpdate = () => {
+      try {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          setExamRecords(JSON.parse(saved));
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener('gradebook_updated', handleExternalUpdate);
+    return () => window.removeEventListener('gradebook_updated', handleExternalUpdate);
   }, []);
 
   const saveRecords = (newRecords) => {

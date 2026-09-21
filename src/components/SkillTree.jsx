@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { 
   CheckCircle, Lock, Unlock, ChevronRight, Award, 
-  HelpCircle, Sparkles, BookOpen, ArrowRight, Star
+  Sparkles, BookOpen, ArrowRight, Star
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { CURRICULUM_TIERS } from '../data/curriculumData';

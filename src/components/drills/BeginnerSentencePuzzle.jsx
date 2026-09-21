@@ -1,9 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   Puzzle, Sparkles, CheckCircle2, RotateCcw, ArrowRight, 
-  BookOpen, HelpCircle, Star, ArrowUpRight, Volume2, Layers,
-  ChevronRight, Trophy, Zap, Check, Keyboard, Flame, RefreshCw,
-  Target, Award
+  BookOpen, Star, Volume2, Layers, Check, Keyboard, 
+  RefreshCw, Target
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { PUZZLE_BAND_TIERS, BEGINNER_PUZZLE_LEVELS, BEGINNER_VOCAB_UPGRADES } from '../../data/beginnerLessonsData';

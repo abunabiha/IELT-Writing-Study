@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Settings, Key, Volume2, VolumeX, RotateCcw, ShieldCheck, Check, ExternalLink } from 'lucide-react';
+import { Settings, Key, Volume2, VolumeX, RotateCcw, Check, ExternalLink } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
 export default function SettingsModal({

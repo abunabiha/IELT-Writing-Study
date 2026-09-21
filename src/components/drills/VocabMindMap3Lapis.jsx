@@ -1,9 +1,7 @@
 import React, { useState } from 'react';
 import { 
-  GitFork, Volume2, Sparkles, Search, Layers, 
-  CheckCircle2, ArrowRight, BookOpen, Award, 
-  RotateCcw, ShieldCheck, Flame, Zap, Compass, Check,
-  LayoutGrid, Network, CircleDot, Eye
+  Volume2, Sparkles, Search, 
+  Zap, Check, LayoutGrid, CircleDot, Eye
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { VOCAB_MINDMAP_DATA } from '../../data/vocabMindMapData';

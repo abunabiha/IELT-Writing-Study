@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { User, Award, Sparkles, Check, Star, Target, Compass, X } from 'lucide-react';
+import { User, Sparkles, Check, Star, Target, Compass, X } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 import { AVATAR_OPTIONS, TARGET_BAND_OPTIONS, GOAL_OPTIONS } from '../../data/userProfileData';
 

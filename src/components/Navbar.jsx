@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Trophy, Flame, Volume2, VolumeX, Settings, BookOpen, 
-  Sparkles, ChevronDown, Menu, X, Check, ArrowRight,
-  Layers, Compass, Zap
+  Flame, Volume2, VolumeX, Settings, BookOpen, 
+  Sparkles, ChevronDown, Menu, X, Check, Compass
 } from 'lucide-react';
 import { soundFx } from '../utils/soundEffects';
 

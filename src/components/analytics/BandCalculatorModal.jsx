@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, CheckCircle, ShieldAlert, Award } from 'lucide-react';
+import { BookOpen, Award } from 'lucide-react';
 import { soundFx } from '../../utils/soundEffects';
 
 export default function BandCalculatorModal({ isOpen, onClose }) {

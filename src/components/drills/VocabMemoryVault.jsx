@@ -2,10 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { 
   Brain, Sparkles, RotateCcw, Volume2, CheckCircle2, 
   XCircle, AlertCircle, BookOpen, Lightbulb, Layers, 
-  ArrowRight, ArrowLeft, Award, HelpCircle, Trophy,
+  ArrowRight, ArrowLeft, Trophy,
   Leaf, Cpu, GraduationCap, Building2, HeartPulse, 
-  Globe, TrendingUp, Landmark, Flame, Search, Filter,
-  Bot, RefreshCw
+  Globe, TrendingUp, Landmark, Search,
+  Bot
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { VOCAB_TOPICS } from '../../data/vocabMemoryData';

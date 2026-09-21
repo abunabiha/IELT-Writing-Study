@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { 
   BookOpen, Sparkles, Award, Target, CheckCircle2, 
-  HelpCircle, ArrowRight, Layers, FileText, Compass, 
-  Search, ShieldAlert, Zap, Feather, Check, Lightbulb,
-  ChevronRight, Bookmark
+  ArrowRight, Layers, FileText, Compass, 
+  Search, ShieldAlert, Zap, Check, Lightbulb, Bookmark
 } from 'lucide-react';
 import { 
   FUNDAMENTAL_WRITING_THEORY,

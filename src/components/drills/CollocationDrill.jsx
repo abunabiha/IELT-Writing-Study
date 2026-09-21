@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Sparkles, Leaf, Cpu, GraduationCap, Building2, 
-  CheckCircle, Play, RotateCcw, Award, Flame, Volume2 
+  CheckCircle, RotateCcw, Award, Flame 
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { TOPIC_COLLOCATIONS } from '../../data/curriculumData';

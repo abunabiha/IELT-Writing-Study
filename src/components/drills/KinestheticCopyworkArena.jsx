@@ -1,9 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Keyboard, Sparkles, CheckCircle2, RotateCcw, Volume2, 
-  Award, ArrowRight, ArrowLeft, BookOpen, Clock, Zap, 
-  Layers, Check, HelpCircle, ShieldCheck, Flame, BarChart3,
-  Filter
+  Keyboard, Sparkles, RotateCcw, Volume2, 
+  Award, ArrowRight, Zap, Check, BarChart3, Filter
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { COPYWORK_LEVELS, COPYWORK_TOPICS, COPYWORK_LESSONS } from '../../data/copyworkLessonsData';
