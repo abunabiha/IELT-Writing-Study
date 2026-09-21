@@ -49,6 +49,15 @@ export default function Navbar({
           highlight: true
         },
         {
+          id: 'writingLiteracy',
+          name: 'Literasi Writing & Grammar',
+          shortName: 'Literasi',
+          icon: '📖',
+          badge: 'Panduan & Teori',
+          desc: '4 Rubrik Cambridge, arsitektur Task 1 & 2, serta lab tata bahasa Band 8+',
+          highlight: true
+        },
+        {
           id: 'skillTree',
           name: 'Skill Tree Roadmap',
           shortName: 'Skill Tree',
@@ -70,6 +79,15 @@ export default function Navbar({
       icon: '⚡',
       items: [
         {
+          id: 'mindMapVault',
+          name: 'Mind Map Kosakata 3 Lapis',
+          shortName: 'Mind Map',
+          icon: '🌿',
+          badge: 'Visual Map',
+          desc: 'Peta konsep 3 lapis: Topik Makro -> Klaster Konsep -> Kosa Kata & Kolokasi',
+          highlight: true
+        },
+        {
           id: 'vocabMaster',
           name: 'Vocab Memory Vault 6000',
           shortName: 'Vocab Vault',
@@ -82,8 +100,8 @@ export default function Navbar({
           name: 'Kinesthetic Copywork Arena',
           shortName: 'Copywork Arena',
           icon: '⌨️',
-          badge: 'Kinetik Tangan',
-          desc: 'Latihan menulis kinetik meniru teks master dari kalimat hingga esai penuh'
+          badge: '10/Topik + Grafik',
+          desc: 'Latihan menulis kinetik 70 teks master dari kalimat, grafik visual hingga esai penuh'
         },
         {
           id: 'sentenceLab',
