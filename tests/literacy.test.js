@@ -1,11 +1,58 @@
 import test from 'node:test';
 import assert from 'node:assert';
 import { 
+  FUNDAMENTAL_WRITING_THEORY,
+  INTERMEDIATE_WRITING_THEORY,
+  ADVANCED_WRITING_THEORY,
   BAND_DESCRIPTORS_LITERACY, 
   TASK1_WRITING_GUIDE, 
   TASK2_WRITING_GUIDE, 
   ADVANCED_GRAMMAR_MODULES 
 } from '../src/data/writingGrammarLiteracyData.js';
+
+test('FUNDAMENTAL_WRITING_THEORY covers essential sentence building blocks with bilingual theory and examples', () => {
+  assert.ok(FUNDAMENTAL_WRITING_THEORY.length >= 4, 'Must have at least 4 fundamental topics');
+  const expectedIds = ['sentence_anatomy', 'four_sentence_structures', 'punctuation_mastery', 'subject_verb_agreement'];
+  
+  for (const id of expectedIds) {
+    const item = FUNDAMENTAL_WRITING_THEORY.find(f => f.id === id);
+    assert.ok(item, `Fundamental theory must include ${id}`);
+    assert.ok(item.title && item.titleId, `Item ${id} must have bilingual title`);
+    assert.ok(item.formulaEn && item.formulaId, `Item ${id} must have formula`);
+    assert.ok(item.conceptEn && item.conceptId, `Item ${id} must have concept explanation`);
+    assert.ok(item.rulesId && item.rulesId.length >= 2, `Item ${id} must have writing rules`);
+    assert.ok(item.badExample && item.badExample.en && item.badExample.id, `Item ${id} must have weak example with translation`);
+    assert.ok(item.goodExample && item.goodExample.en && item.goodExample.id, `Item ${id} must have strong example with translation`);
+    assert.ok(item.practicePrompt && item.practicePrompt.modelAnswerEn, `Item ${id} must have practice prompt`);
+  }
+});
+
+test('INTERMEDIATE_WRITING_THEORY covers paraphrasing, PEEL, cohesion, and register', () => {
+  assert.ok(INTERMEDIATE_WRITING_THEORY.length >= 4, 'Must have at least 4 intermediate topics');
+  const expectedIds = ['paraphrasing_techniques', 'peel_paragraph_framework', 'cohesion_and_referencing', 'formal_academic_register'];
+
+  for (const id of expectedIds) {
+    const item = INTERMEDIATE_WRITING_THEORY.find(f => f.id === id);
+    assert.ok(item, `Intermediate theory must include ${id}`);
+    assert.ok(item.title && item.titleId, `Item ${id} must have bilingual title`);
+    assert.ok(item.formulaEn && item.formulaId, `Item ${id} must have formula`);
+    assert.ok(item.conceptEn && item.conceptId, `Item ${id} must have concept explanation`);
+    assert.ok(item.badExample && item.goodExample, `Item ${id} must have before and after examples`);
+  }
+});
+
+test('ADVANCED_WRITING_THEORY covers Band 8.5+ syntax with inversion, clefts, participles, and hedging', () => {
+  assert.ok(ADVANCED_WRITING_THEORY.length >= 5, 'Must have at least 5 advanced topics');
+  const expectedIds = ['nominalisation', 'negative_inversion', 'cleft_sentences', 'participle_clauses', 'hedging_cautious_language'];
+
+  for (const id of expectedIds) {
+    const item = ADVANCED_WRITING_THEORY.find(f => f.id === id);
+    assert.ok(item, `Advanced theory must include ${id}`);
+    assert.ok(item.title && item.titleId, `Item ${id} must have bilingual title`);
+    assert.ok(item.formulaEn && item.formulaId, `Item ${id} must have formula`);
+    assert.ok(item.badExample && item.goodExample, `Item ${id} must have comparison examples`);
+  }
+});
 
 test('BAND_DESCRIPTORS_LITERACY contains 4 core criteria with bilingual details', () => {
   assert.strictEqual(BAND_DESCRIPTORS_LITERACY.length, 4);
@@ -51,16 +98,5 @@ test('TASK2_WRITING_GUIDE contains essay types and PEEL framework', () => {
   for (const step of TASK2_WRITING_GUIDE.peelFramework.steps) {
     assert.ok(step.letter && step.name && step.descEn && step.descId);
     assert.ok(step.exampleEn && step.exampleId, 'PEEL step must have bilingual example');
-  }
-});
-
-test('ADVANCED_GRAMMAR_MODULES contains Band 8.5+ modules with before/after comparisons', () => {
-  assert.ok(ADVANCED_GRAMMAR_MODULES.length >= 5);
-  for (const mod of ADVANCED_GRAMMAR_MODULES) {
-    assert.ok(mod.id && mod.title, 'Grammar module must have id and title');
-    assert.ok(mod.conceptEn && mod.conceptId, 'Grammar module must have conceptEn and conceptId');
-    assert.ok(mod.beforeTextEn && mod.beforeTextId, 'Grammar module must have before texts');
-    assert.ok(mod.afterTextEn && mod.afterTextId, 'Grammar module must have after texts');
-    assert.ok(mod.rulesId && mod.rulesId.length > 0, 'Grammar module must have rules');
   }
 });
