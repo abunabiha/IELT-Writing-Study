@@ -1,10 +1,13 @@
 # IELTS Writing Band 8 Master (GameWriting) 🎯✍️
 
-[![CI/CD Pipeline](https://github.com/abunabiha/IELT-Writing-Study/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/abunabiha/IELT-Writing-Study/actions/workflows/ci-cd.yml)
-[![Node.js](https://img.shields.io/badge/Node.js-v22-green.svg)](https://nodejs.org/)
+[![Deploy to GitHub Pages](https://github.com/abunabiha/IELT-Writing-Study/actions/workflows/deploy.yml/badge.svg)](https://github.com/abunabiha/IELT-Writing-Study/actions/workflows/deploy.yml)
+[![Node.js](https://img.shields.io/badge/Node.js-v20-green.svg)](https://nodejs.org/)
 [![React](https://img.shields.io/badge/React-19.0-blue.svg)](https://react.dev/)
 [![Tailwind CSS](https://img.shields.io/badge/TailwindCSS-v4.0-38bdf8.svg)](https://tailwindcss.com/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+> **🌐 Live Demo Online (GitHub Pages):**  
+> 👉 **[https://abunabiha.github.io/IELT-Writing-Study/](https://abunabiha.github.io/IELT-Writing-Study/)**
 
 > **Aplikasi Pembelajaran Interaktif IELTS Writing Berbasis Gamifikasi (GameWriting) dari Level Dasar (Band 4.0) hingga Mahir (Band 8.0+).**  
 > Proyek Riset Doktoral (*Doctoral Dissertation Research Artifact*) — **Asia e University (AeU)**.
