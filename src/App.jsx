@@ -14,10 +14,23 @@ import Task2EssayBuilder from './components/simulator/Task2EssayBuilder';
 import GradeBook from './components/analytics/GradeBook';
 import BandCalculatorModal from './components/analytics/BandCalculatorModal';
 import SettingsModal from './components/settings/SettingsModal';
+import UserProfileModal from './components/profile/UserProfileModal';
 import { soundFx } from './utils/soundEffects';
 import confetti from 'canvas-confetti';
 
 export default function App() {
+  // Persistent user profile state (Name, Target Band, Avatar)
+  const [userProfile, setUserProfile] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ielts_user_profile');
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+
   // Persistent user state
   const [xp, setXp] = useState(() => {
     const saved = localStorage.getItem('ielts_game_xp');
@@ -42,10 +55,50 @@ export default function App() {
     return localStorage.getItem('ielts_sound_muted') === 'true';
   });
 
-  // Default to 'beginnerPuzzle' so beginners start from comfortable, friendly foundation
-  const [activeTab, setActiveTab] = useState('beginnerPuzzle');
+  // Persistent active tab (resumes where user left off)
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('ielts_active_tab') || 'beginnerPuzzle';
+  });
   const [isRubricOpen, setIsRubricOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Sync activeTab to localStorage
+  useEffect(() => {
+    localStorage.setItem('ielts_active_tab', activeTab);
+  }, [activeTab]);
+
+  // Daily streak check with ielts_last_active_date
+  useEffect(() => {
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const lastDate = localStorage.getItem('ielts_last_active_date');
+      if (!lastDate) {
+        localStorage.setItem('ielts_last_active_date', today);
+      } else if (lastDate !== today) {
+        const diffDays = Math.floor((new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
+        if (diffDays === 1) {
+          setStreak(prev => {
+            const next = prev + 1;
+            localStorage.setItem('ielts_game_streak', String(next));
+            return next;
+          });
+        } else if (diffDays > 1) {
+          setStreak(1);
+          localStorage.setItem('ielts_game_streak', '1');
+        }
+        localStorage.setItem('ielts_last_active_date', today);
+      }
+    } catch (err) {
+      console.warn('Streak check error:', err);
+    }
+  }, []);
+
+  // Open profile modal automatically if user hasn't set their name yet
+  useEffect(() => {
+    if (!userProfile || !userProfile.name) {
+      setIsProfileModalOpen(true);
+    }
+  }, [userProfile]);
 
   // Sync sound muted with soundFx
   useEffect(() => {
@@ -100,12 +153,35 @@ export default function App() {
     localStorage.setItem('ielts_gemini_api_key', key);
   };
 
-  const handleResetProgress = () => {
+  const handleSaveProfile = (newProfile, isInitial) => {
+    setUserProfile(newProfile);
+    localStorage.setItem('ielts_user_profile', JSON.stringify(newProfile));
+    setIsProfileModalOpen(false);
+    
+    if (isInitial) {
+      handleAddXp(50);
+      confetti({ particleCount: 150, spread: 90, origin: { y: 0.5 } });
+    }
+  };
+
+  const handleResetProgress = (resetProfile = false) => {
     setXp(50);
     setStreak(1);
     setCompletedDrills([]);
     localStorage.removeItem('ielts_game_xp');
+    localStorage.removeItem('ielts_game_streak');
     localStorage.removeItem('ielts_game_drills');
+    localStorage.removeItem('ielts_puzzle_completed');
+    localStorage.removeItem('ielts_puzzle_typed_completed');
+    localStorage.removeItem('ielts_puzzle_band');
+    localStorage.removeItem('ielts_copywork_completed');
+    localStorage.removeItem('ielts_copywork_lesson_idx');
+    
+    if (resetProfile) {
+      setUserProfile(null);
+      localStorage.removeItem('ielts_user_profile');
+      setIsProfileModalOpen(true);
+    }
   };
 
   return (
@@ -118,6 +194,8 @@ export default function App() {
         levelTitle={getLevelTitle(level)}
         streak={streak}
         soundMuted={soundMuted}
+        userProfile={userProfile}
+        onOpenProfileModal={() => setIsProfileModalOpen(true)}
         onToggleSound={handleToggleSound}
         onOpenSettings={() => setIsSettingsOpen(true)}
         onOpenRubricGuide={() => setIsRubricOpen(true)}
@@ -149,7 +227,9 @@ export default function App() {
             xp={xp}
             streak={streak}
             level={Math.floor(xp / 500) + 1}
-            levelTitle="Academic Aspirant"
+            levelTitle={getLevelTitle(level)}
+            userProfile={userProfile}
+            onOpenProfileModal={() => setIsProfileModalOpen(true)}
             completedDrills={completedDrills}
             onNavigateTab={setActiveTab}
           />
@@ -246,7 +326,21 @@ export default function App() {
         onSaveApiKey={handleSaveApiKey}
         soundMuted={soundMuted}
         onToggleSound={handleToggleSound}
+        userProfile={userProfile}
+        onOpenProfileModal={() => {
+          setIsSettingsOpen(false);
+          setIsProfileModalOpen(true);
+        }}
         onResetProgress={handleResetProgress}
+      />
+
+      {/* User Onboarding & Profile Modal */}
+      <UserProfileModal
+        isOpen={isProfileModalOpen || !userProfile?.name}
+        isInitialOnboarding={!userProfile?.name}
+        onClose={() => setIsProfileModalOpen(false)}
+        userProfile={userProfile}
+        onSaveProfile={handleSaveProfile}
       />
 
       {/* Footer */}

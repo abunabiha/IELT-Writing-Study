@@ -12,6 +12,8 @@ export default function Navbar({
   levelTitle,
   streak,
   soundMuted,
+  userProfile,
+  onOpenProfileModal,
   onToggleSound,
   onOpenSettings,
   onOpenRubricGuide,
@@ -332,9 +334,31 @@ export default function Navbar({
             </button>
           </div>
 
-          {/* Right Controls: Stats, Audio, Rubric, Settings */}
+          {/* Right Controls: User Profile, Stats, Audio, Rubric, Settings */}
           <div className="flex items-center gap-1.5 sm:gap-2">
             
+            {/* User Profile Badge (Click to Edit) */}
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                if (onOpenProfileModal) onOpenProfileModal();
+              }}
+              className="flex items-center gap-1.5 px-2 sm:px-2.5 py-1 rounded-xl bg-gradient-to-r from-indigo-500/15 via-purple-500/15 to-indigo-500/15 border border-indigo-500/30 hover:border-indigo-400 text-xs text-white transition shadow-sm group"
+              title="Sunting Profil Pengguna & Target Band"
+            >
+              <span className="text-sm group-hover:scale-110 transition-transform">
+                {userProfile?.avatar || '🎓'}
+              </span>
+              <div className="text-left hidden lg:block leading-none">
+                <div className="text-[11px] font-bold text-slate-100 max-w-[85px] truncate">
+                  {userProfile?.name ? userProfile.name.split(' ')[0] : 'Profil'}
+                </div>
+                <div className="text-[9px] text-indigo-300 font-mono mt-0.5">
+                  Band {userProfile?.targetBand || '7.5'}
+                </div>
+              </div>
+            </button>
+
             {/* Daily Streak */}
             <div 
               className="flex items-center gap-1 px-2 sm:px-2.5 py-1 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs font-bold"
@@ -417,6 +441,29 @@ export default function Navbar({
         <div className="md:hidden fixed inset-x-0 top-16 bottom-0 z-50 bg-slate-950/90 backdrop-blur-xl border-t border-slate-800 overflow-y-auto p-4 animate-in fade-in duration-200">
           <div className="max-w-md mx-auto space-y-4 pb-12">
             
+            {/* User Profile Card on Mobile */}
+            <div className="p-3.5 rounded-2xl bg-gradient-to-r from-indigo-950/80 via-slate-900 to-purple-950/80 border border-indigo-500/40 flex items-center justify-between shadow-lg">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl">{userProfile?.avatar || '🎓'}</span>
+                <div>
+                  <div className="text-xs font-bold text-white">{userProfile?.name || 'Kandidat IELTS'}</div>
+                  <div className="text-[10px] text-indigo-300 font-mono">
+                    Target: Band {userProfile?.targetBand || '7.5'} • Level {level}
+                  </div>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  soundFx.playClick();
+                  setIsMobileMenuOpen(false);
+                  if (onOpenProfileModal) onOpenProfileModal();
+                }}
+                className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow"
+              >
+                Ubah Profil
+              </button>
+            </div>
+
             {/* Header info in drawer */}
             <div className="flex items-center justify-between px-1 text-xs text-slate-400">
               <span className="font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">

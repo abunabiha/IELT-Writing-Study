@@ -11,13 +11,40 @@ import { getPuzzleWordByWordData } from '../../data/puzzleWordByWordData';
 import { soundFx } from '../../utils/soundEffects';
 
 export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
-  const [selectedBand, setSelectedBand] = useState('band5'); // 'band5' | 'band6' | 'band7' | 'band8'
-  const [levelIdx, setLevelIdx] = useState(0); // 0 to 29
+  // Persistent selectedBand
+  const [selectedBand, setSelectedBand] = useState(() => {
+    try {
+      return localStorage.getItem('ielts_puzzle_band') || 'band5';
+    } catch (e) {
+      return 'band5';
+    }
+  });
+
+  // Persistent level index for the active band
+  const [levelIdx, setLevelIdx] = useState(() => {
+    try {
+      const savedBand = localStorage.getItem('ielts_puzzle_band') || 'band5';
+      const savedIdx = localStorage.getItem(`ielts_puzzle_level_${savedBand}`);
+      return savedIdx ? Math.min(29, Math.max(0, parseInt(savedIdx, 10))) : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+
   const [placedBlockIds, setPlacedBlockIds] = useState([]);
   const [isSuccess, setIsSuccess] = useState(false);
   const [showPowerUp, setShowPowerUp] = useState(false);
   const [showVocabDrawer, setShowVocabDrawer] = useState(false);
-  const [completedLevels, setCompletedLevels] = useState({});
+
+  // Persistent completed puzzle levels (keys: level IDs)
+  const [completedLevels, setCompletedLevels] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ielts_puzzle_completed');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
 
   // Active Stage: 'puzzle' (Susun Balok) | 'typing' (Ketik Kinetik)
   const [activeStage, setActiveStage] = useState('puzzle');
@@ -27,8 +54,45 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
   const [typingTargetMode, setTypingTargetMode] = useState('standard'); // 'standard' | 'powerup'
   const [typingStartTime, setTypingStartTime] = useState(null);
   const [isTypingCompleted, setIsTypingCompleted] = useState(false);
-  const [completedTypingLevels, setCompletedTypingLevels] = useState({});
+
+  // Persistent completed typing levels (keys: level IDs)
+  const [completedTypingLevels, setCompletedTypingLevels] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ielts_puzzle_typed_completed');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
   const typingInputRef = useRef(null);
+
+  // Sync selectedBand to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ielts_puzzle_band', selectedBand);
+    } catch (e) {}
+  }, [selectedBand]);
+
+  // Sync level index for active band to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem(`ielts_puzzle_level_${selectedBand}`, String(levelIdx));
+    } catch (e) {}
+  }, [selectedBand, levelIdx]);
+
+  // Sync completedLevels to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ielts_puzzle_completed', JSON.stringify(completedLevels));
+    } catch (e) {}
+  }, [completedLevels]);
+
+  // Sync completedTypingLevels to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ielts_puzzle_typed_completed', JSON.stringify(completedTypingLevels));
+    } catch (e) {}
+  }, [completedTypingLevels]);
 
   // Get active tier and active puzzles
   const activeTier = PUZZLE_BAND_TIERS.find(t => t.id === selectedBand) || PUZZLE_BAND_TIERS[0];
@@ -53,7 +117,15 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
   const handleSelectBand = (bandId) => {
     soundFx.playClick();
     setSelectedBand(bandId);
-    setLevelIdx(0);
+    
+    // Restore the user's progress for this band tier instead of always resetting to 0
+    try {
+      const savedIdx = localStorage.getItem(`ielts_puzzle_level_${bandId}`);
+      setLevelIdx(savedIdx ? Math.min(29, Math.max(0, parseInt(savedIdx, 10))) : 0);
+    } catch (e) {
+      setLevelIdx(0);
+    }
+
     setPlacedBlockIds([]);
     setIsSuccess(false);
     setShowPowerUp(false);
@@ -110,8 +182,10 @@ export default function BeginnerSentencePuzzle({ xp, onAddXp }) {
       // Advance to next band tier if available
       const tierIndex = PUZZLE_BAND_TIERS.findIndex(t => t.id === selectedBand);
       if (tierIndex + 1 < PUZZLE_BAND_TIERS.length) {
-        setSelectedBand(PUZZLE_BAND_TIERS[tierIndex + 1].id);
-        setLevelIdx(0);
+        const nextBandId = PUZZLE_BAND_TIERS[tierIndex + 1].id;
+        setSelectedBand(nextBandId);
+        const savedIdx = localStorage.getItem(`ielts_puzzle_level_${nextBandId}`);
+        setLevelIdx(savedIdx ? Math.min(29, Math.max(0, parseInt(savedIdx, 10))) : 0);
       } else {
         setLevelIdx(0);
       }

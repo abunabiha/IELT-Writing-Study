@@ -67,7 +67,16 @@ export const calculateOverallBand = (tr, cc, lr, gra) => {
   return Math.ceil(avg);
 };
 
-export default function GradeBook({ xp = 0, streak = 0, level = 1, levelTitle = 'Apprentice', completedDrills = [], onNavigateTab }) {
+export default function GradeBook({
+  xp = 0,
+  streak = 0,
+  level = 1,
+  levelTitle = 'Apprentice',
+  completedDrills = [],
+  userProfile = null,
+  onOpenProfileModal = null,
+  onNavigateTab
+}) {
   const [examRecords, setExamRecords] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRecordDetail, setSelectedRecordDetail] = useState(null);
@@ -318,6 +327,39 @@ export default function GradeBook({ xp = 0, streak = 0, level = 1, levelTitle = 
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-8 space-y-8">
+      {/* Print-Only Official Transcript Header */}
+      <div className="hidden print:block border-b-2 border-slate-900 pb-4 mb-6 text-black">
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-xl font-black text-slate-900 tracking-tight uppercase">
+              Transkrip Rapor Resmi Siswa • IELTS Writing Band 8 Master
+            </h1>
+            <p className="text-xs text-slate-600 mt-0.5">
+              Standar Penilaian 4 Kriteria Cambridge: Task Response, Coherence & Cohesion, Lexical Resource, Grammatical Range & Accuracy
+            </p>
+          </div>
+          <div className="text-right">
+            <span className="text-xs font-bold text-slate-700 block">Tanggal Cetak:</span>
+            <span className="text-xs font-mono text-slate-800">{new Date().toLocaleDateString('id-ID', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4 mt-4 p-3.5 bg-slate-100 rounded-xl border border-slate-300 text-xs">
+          <div>
+            <span className="text-slate-500 block font-semibold">Nama Siswa:</span>
+            <span className="text-sm font-black text-slate-900">{userProfile?.name || 'Kandidat IELTS'}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block font-semibold">Target Skor Band:</span>
+            <span className="text-sm font-black text-indigo-700">Band {userProfile?.targetBand || '7.5'}</span>
+          </div>
+          <div>
+            <span className="text-slate-500 block font-semibold">Tujuan / Motivasi:</span>
+            <span className="text-xs font-medium text-slate-800 truncate block">{userProfile?.goal || 'Persiapan Ujian IELTS'}</span>
+          </div>
+        </div>
+      </div>
+
       {/* Header Banner */}
       <div className="rounded-2xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 border border-indigo-500/30 p-6 md:p-8 shadow-xl relative overflow-hidden">
         <div className="absolute -right-10 -bottom-10 w-60 h-60 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
@@ -334,6 +376,33 @@ export default function GradeBook({ xp = 0, streak = 0, level = 1, levelTitle = 
             <p className="text-slate-300 text-xs sm:text-sm mt-1 max-w-2xl leading-relaxed">
               Catat, pantau, dan analisis setiap hasil latihan maupun simulasi ujian resmi IELTS Writing Anda berdasarkan 4 kriteria penguji Cambridge (TR, CC, LR, GRA).
             </p>
+
+            {/* Student Identification Badge */}
+            <div className="flex flex-wrap items-center gap-2.5 mt-3 pt-3 border-t border-indigo-500/20">
+              <span className="text-xl">{userProfile?.avatar || '🎓'}</span>
+              <span className="text-xs sm:text-sm font-bold text-white">
+                Rapor Siswa: <span className="text-indigo-300 font-extrabold">{userProfile?.name || 'Kandidat IELTS'}</span>
+              </span>
+              <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 font-mono font-bold border border-emerald-500/40">
+                Target: Band {userProfile?.targetBand || '7.5'}
+              </span>
+              {userProfile?.goal && (
+                <span className="text-[11px] text-slate-400 hidden sm:inline">
+                  • {userProfile.goal}
+                </span>
+              )}
+              {onOpenProfileModal && (
+                <button
+                  onClick={() => {
+                    soundFx.playClick();
+                    onOpenProfileModal();
+                  }}
+                  className="text-xs text-indigo-400 hover:text-indigo-300 underline font-semibold transition"
+                >
+                  (Ubah Profil)
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="flex flex-wrap items-center gap-3">

@@ -9,6 +9,8 @@ export default function SettingsModal({
   onSaveApiKey,
   soundMuted,
   onToggleSound,
+  userProfile,
+  onOpenProfileModal,
   onResetProgress
 }) {
   const [tempKey, setTempKey] = useState(apiKey || '');
@@ -24,9 +26,9 @@ export default function SettingsModal({
     setTimeout(() => setIsSaved(false), 2000);
   };
 
-  const handleReset = () => {
+  const handleReset = (resetProfile = false) => {
     soundFx.playWrong();
-    onResetProgress();
+    onResetProgress(resetProfile);
     setShowConfirmReset(false);
     onClose();
   };
@@ -55,6 +57,32 @@ export default function SettingsModal({
           >
             ✕
           </button>
+        </div>
+
+        {/* User Profile Card */}
+        <div className="p-4 rounded-2xl bg-gradient-to-r from-indigo-950/60 to-purple-950/60 border border-indigo-500/40 flex items-center justify-between shadow-inner">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{userProfile?.avatar || '🎓'}</span>
+            <div>
+              <div className="text-xs font-extrabold text-white">
+                {userProfile?.name ? userProfile.name : 'Profil Belum Diisi'}
+              </div>
+              <div className="text-[11px] text-indigo-300 font-mono">
+                Target: Band {userProfile?.targetBand || '7.5'} • {userProfile?.goal ? userProfile.goal.split('(')[0] : 'IELTS Writing'}
+              </div>
+            </div>
+          </div>
+          {onOpenProfileModal && (
+            <button
+              onClick={() => {
+                soundFx.playClick();
+                onOpenProfileModal();
+              }}
+              className="px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold transition shadow-md"
+            >
+              Ubah Nama & Profil
+            </button>
+          )}
         </div>
 
         {/* Gemini API Key Setting */}
@@ -133,16 +161,24 @@ export default function SettingsModal({
                 <span>Reset</span>
               </button>
             ) : (
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  onClick={handleReset}
-                  className="px-3 py-1.5 rounded-xl bg-rose-600 text-white text-xs font-bold hover:bg-rose-500 transition"
+                  onClick={() => handleReset(false)}
+                  className="px-2.5 py-1.5 rounded-xl bg-amber-600 text-white text-[11px] font-bold hover:bg-amber-500 transition"
+                  title="Mereset latihan namun nama pengguna tetap tersimpan"
                 >
-                  Ya, Reset Semua
+                  Reset Latihan Saja
+                </button>
+                <button
+                  onClick={() => handleReset(true)}
+                  className="px-2.5 py-1.5 rounded-xl bg-rose-600 text-white text-[11px] font-bold hover:bg-rose-500 transition"
+                  title="Mereset semua data termasuk nama pengguna"
+                >
+                  Reset Total
                 </button>
                 <button
                   onClick={() => setShowConfirmReset(false)}
-                  className="px-3 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-xs hover:bg-slate-700 transition"
+                  className="px-2.5 py-1.5 rounded-xl bg-slate-800 text-slate-300 text-[11px] hover:bg-slate-700 transition"
                 >
                   Batal
                 </button>
@@ -150,7 +186,7 @@ export default function SettingsModal({
             )}
           </div>
           <p className="text-[11px] text-slate-500">
-            Mengembalikan skor XP, level, dan latihan yang sudah diselesaikan ke kondisi awal.
+            Mengembalikan skor XP, level, dan latihan ke awal tanpa harus kehilangan nama profil Anda jika memilih 'Reset Latihan Saja'.
           </p>
         </div>
 

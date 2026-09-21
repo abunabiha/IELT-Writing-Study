@@ -353,9 +353,37 @@ function VisualChartDisplay({ chart }) {
 // MAIN COMPONENT: KINESTHETIC COPYWORK ARENA
 // =============================================================================
 export default function KinestheticCopyworkArena({ xp, onAddXp }) {
-  const [selectedTopicId, setSelectedTopicId] = useState('all');
+  // Persistent topic selection
+  const [selectedTopicId, setSelectedTopicId] = useState(() => {
+    try {
+      return localStorage.getItem('ielts_copywork_topic') || 'all';
+    } catch (e) {
+      return 'all';
+    }
+  });
+
   const [selectedLevel, setSelectedLevel] = useState(1);
-  const [selectedLessonIdx, setSelectedLessonIdx] = useState(0);
+
+  // Persistent lesson index selection
+  const [selectedLessonIdx, setSelectedLessonIdx] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ielts_copywork_lesson_idx');
+      return saved ? parseInt(saved, 10) : 0;
+    } catch (e) {
+      return 0;
+    }
+  });
+
+  // Persistent completed lessons tracking
+  const [completedLessons, setCompletedLessons] = useState(() => {
+    try {
+      const saved = localStorage.getItem('ielts_copywork_completed');
+      return saved ? JSON.parse(saved) : {};
+    } catch (e) {
+      return {};
+    }
+  });
+
   const [userInput, setUserInput] = useState('');
   const [startTime, setStartTime] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
@@ -368,6 +396,27 @@ export default function KinestheticCopyworkArena({ xp, onAddXp }) {
   const [showTranslation, setShowTranslation] = useState(true);
 
   const inputRef = useRef(null);
+
+  // Sync topic to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ielts_copywork_topic', selectedTopicId);
+    } catch (e) {}
+  }, [selectedTopicId]);
+
+  // Sync lesson index to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ielts_copywork_lesson_idx', String(selectedLessonIdx));
+    } catch (e) {}
+  }, [selectedLessonIdx]);
+
+  // Sync completed lessons to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('ielts_copywork_completed', JSON.stringify(completedLessons));
+    } catch (e) {}
+  }, [completedLessons]);
 
   // Filter lessons by Topic and/or Level
   const filteredLessons = COPYWORK_LESSONS.filter(l => {
@@ -450,6 +499,11 @@ export default function KinestheticCopyworkArena({ xp, onAddXp }) {
       setWpm(finalWpm);
       setIsCompleted(true);
       setShowBreakdown(true);
+
+      // Record completed lesson
+      if (currentLesson?.id) {
+        setCompletedLessons(prev => ({ ...prev, [currentLesson.id]: true }));
+      }
 
       const levelData = COPYWORK_LEVELS.find(l => l.id === currentLesson.level);
       const earnedXp = levelData ? levelData.xpReward : 50;
@@ -566,24 +620,31 @@ export default function KinestheticCopyworkArena({ xp, onAddXp }) {
       <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/90 p-3 rounded-2xl border border-slate-800 text-xs">
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5">
           <span className="text-slate-400 font-semibold shrink-0 mr-1">Latihan ({filteredLessons.length}):</span>
-          {filteredLessons.map((l, lIdx) => (
-            <button
-              key={l.id}
-              onClick={() => {
-                soundFx.playClick();
-                setSelectedLessonIdx(lIdx);
-              }}
-              className={`px-3 py-1.5 rounded-xl font-bold transition shrink-0 flex items-center gap-1.5 ${
-                selectedLessonIdx === lIdx
-                  ? 'bg-indigo-600 text-white shadow-md'
-                  : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
-              }`}
-            >
-              <span>#{lIdx + 1}</span>
-              <span className="line-clamp-1 max-w-[130px]">{l.title.split(':')[0]}</span>
-              <span className="text-[10px] opacity-75 font-mono">({l.wordCount}w)</span>
-            </button>
-          ))}
+          {filteredLessons.map((l, lIdx) => {
+            const isDone = !!completedLessons[l.id];
+            const isCurrent = selectedLessonIdx === lIdx;
+            return (
+              <button
+                key={l.id}
+                onClick={() => {
+                  soundFx.playClick();
+                  setSelectedLessonIdx(lIdx);
+                }}
+                className={`px-3 py-1.5 rounded-xl font-bold transition shrink-0 flex items-center gap-1.5 ${
+                  isCurrent
+                    ? 'bg-indigo-600 text-white shadow-md'
+                    : isDone
+                    ? 'bg-emerald-950/60 text-emerald-300 border border-emerald-500/40 hover:bg-emerald-900/50'
+                    : 'bg-slate-800 text-slate-300 hover:bg-slate-700'
+                }`}
+              >
+                {isDone && <Check className="w-3 h-3 text-emerald-400 shrink-0" />}
+                <span>#{lIdx + 1}</span>
+                <span className="line-clamp-1 max-w-[130px]">{l.title.split(':')[0]}</span>
+                <span className="text-[10px] opacity-75 font-mono">({l.wordCount}w)</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
