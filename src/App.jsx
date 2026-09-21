@@ -5,6 +5,7 @@ import BeginnerSentencePuzzle from './components/drills/BeginnerSentencePuzzle';
 import SentenceTransformerGame from './components/drills/SentenceTransformerGame';
 import CollocationDrill from './components/drills/CollocationDrill';
 import VocabMemoryVault from './components/drills/VocabMemoryVault';
+import KinestheticCopyworkArena from './components/drills/KinestheticCopyworkArena';
 import Task1ChartLab from './components/simulator/Task1ChartLab';
 import GeneralTrainingLetterLab from './components/simulator/GeneralTrainingLetterLab';
 import Task2EssayBuilder from './components/simulator/Task2EssayBuilder';
@@ -151,9 +152,18 @@ export default function App() {
           />
         )}
 
-        {/* TAB: Vocab Memory Vault (Band 8 Lexical Master) */}
+        {/* TAB: Vocab Memory Vault (Band 8 Lexical Master 6000) */}
         {activeTab === 'vocabMaster' && (
           <VocabMemoryVault
+            xp={xp}
+            onAddXp={handleAddXp}
+            geminiApiKey={geminiApiKey}
+          />
+        )}
+
+        {/* TAB: Kinesthetic Copywork Arena (Typing Imitation Practice) */}
+        {activeTab === 'copyworkArena' && (
+          <KinestheticCopyworkArena
             xp={xp}
             onAddXp={handleAddXp}
           />

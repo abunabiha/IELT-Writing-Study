@@ -71,11 +71,19 @@ export default function Navbar({
       items: [
         {
           id: 'vocabMaster',
-          name: 'Vocab Memory Vault',
+          name: 'Vocab Memory Vault 6000',
           shortName: 'Vocab Vault',
           icon: '🧠',
-          badge: 'Mnemonic',
-          desc: 'Bank kosakata 8 topik IELTS dengan teknik memori anti-lupa'
+          badge: '6.000 Kata',
+          desc: 'Korpus 6.000 kata Band 8, 300 paket belajar harian & Mnemonic AI'
+        },
+        {
+          id: 'copyworkArena',
+          name: 'Kinesthetic Copywork Arena',
+          shortName: 'Copywork Arena',
+          icon: '⌨️',
+          badge: 'Kinetik Tangan',
+          desc: 'Latihan menulis kinetik meniru teks master dari kalimat hingga esai penuh'
         },
         {
           id: 'sentenceLab',

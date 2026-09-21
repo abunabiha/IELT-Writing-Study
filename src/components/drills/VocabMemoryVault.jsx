@@ -4,10 +4,13 @@ import {
   XCircle, AlertCircle, BookOpen, Lightbulb, Layers, 
   ArrowRight, ArrowLeft, Award, HelpCircle, Trophy,
   Leaf, Cpu, GraduationCap, Building2, HeartPulse, 
-  Globe, TrendingUp, Landmark, Flame
+  Globe, TrendingUp, Landmark, Flame, Search, Filter,
+  Bot, RefreshCw
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { VOCAB_TOPICS } from '../../data/vocabMemoryData';
+import { ACADEMIC_CORPUS_6000, CORPUS_TOPICS, searchCorpus, getStudySet } from '../../data/academicCorpus6000';
+import { generateMnemonicWithGemini } from '../../utils/geminiApi';
 import { soundFx } from '../../utils/soundEffects';
 
 const TOPIC_ICONS = {
@@ -21,14 +24,23 @@ const TOPIC_ICONS = {
   Landmark: Landmark
 };
 
-export default function VocabMemoryVault({ xp, onAddXp }) {
+export default function VocabMemoryVault({ xp, onAddXp, geminiApiKey }) {
+  // View mode: 'curated' (8 Topik Mendalam) vs 'corpus6000' (Korpus 6.000 Kata / 300 Set)
+  const [viewMode, setViewMode] = useState('curated');
   const [activeTopicId, setActiveTopicId] = useState('environment');
   const [mode, setMode] = useState('flashcard'); // 'flashcard' | 'cloze'
-  const [filterMastery, setFilterMastery] = useState('all'); // 'all' | 'needs_review' | 'learning' | 'mastered'
+  const [filterMastery, setFilterMastery] = useState('all'); // 'all' | 'needs_review' | 'mastered'
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
-  const [showMnemonic, setShowMnemonic] = useState(true);
   
+  // Corpus 6000 specific state
+  const [studySetIndex, setStudySetIndex] = useState(1);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [tierFilter, setTierFilter] = useState('all');
+  const [corpusPage, setCorpusPage] = useState(1);
+  const [aiMnemonicLoading, setAiMnemonicLoading] = useState(false);
+  const [dynamicMnemonics, setDynamicMnemonics] = useState({});
+
   // Cloze Quiz State
   const [selectedOption, setSelectedOption] = useState(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
@@ -53,36 +65,102 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
     }
   }, [masteryData]);
 
-  // Current active topic
-  const currentTopic = VOCAB_TOPICS.find(t => t.id === activeTopicId) || VOCAB_TOPICS[0];
+  // Current active curated topic
+  const currentCuratedTopic = VOCAB_TOPICS.find(t => t.id === activeTopicId) || VOCAB_TOPICS[0];
 
-  // Filtered items based on mastery status
-  const filteredItems = currentTopic.items.filter(item => {
-    if (filterMastery === 'all') return true;
-    const status = masteryData[item.id] || 'unstudied';
-    return status === filterMastery;
-  });
+  // Determine active item list based on viewMode
+  let activeItemList = [];
+  if (viewMode === 'curated') {
+    activeItemList = currentCuratedTopic.items.filter(item => {
+      if (filterMastery === 'all') return true;
+      const status = masteryData[item.id] || 'unstudied';
+      return status === filterMastery;
+    });
+  } else {
+    // Corpus 6000 View: if searching, use searchCorpus; otherwise use getStudySet
+    if (searchQuery.trim().length > 0) {
+      const searchRes = searchCorpus(searchQuery, 'all', tierFilter, corpusPage, 20);
+      activeItemList = searchRes.items.map(item => ({
+        id: item.id,
+        band8Word: item.word,
+        band5Basic: item.basic,
+        indonesianMeaning: item.meaning,
+        wordType: item.pos,
+        mnemonicHook: item.mnemonic,
+        ieltsSentence: item.example,
+        tier: item.tier
+      }));
+    } else {
+      const setRes = getStudySet(studySetIndex);
+      activeItemList = setRes.items.map(item => ({
+        id: item.id,
+        band8Word: item.word,
+        band5Basic: item.basic,
+        indonesianMeaning: item.meaning,
+        wordType: item.pos,
+        mnemonicHook: item.mnemonic,
+        ieltsSentence: item.example,
+        tier: item.tier
+      }));
+    }
 
-  // Ensure current index is within bounds when topic or filter changes
+    if (filterMastery !== 'all') {
+      activeItemList = activeItemList.filter(item => {
+        const status = masteryData[item.id] || 'unstudied';
+        return status === filterMastery;
+      });
+    }
+  }
+
+  // Reset indices on navigation
   useEffect(() => {
     setCurrentIndex(0);
     setIsFlipped(false);
     setSelectedOption(null);
     setIsAnswerSubmitted(false);
     setShowQuizHint(false);
-  }, [activeTopicId, filterMastery, mode]);
+  }, [activeTopicId, viewMode, studySetIndex, searchQuery, tierFilter, filterMastery, mode]);
 
-  const currentItem = filteredItems[currentIndex] || filteredItems[0];
+  const currentItem = activeItemList[currentIndex] || activeItemList[0];
 
-  // Native Speech Synthesis for pronunciation
+  // Speech synthesis for native British pronunciation
   const speakWord = (text) => {
     soundFx.playClick();
     if ('speechSynthesis' in window) {
       window.speechSynthesis.cancel();
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.lang = 'en-GB'; // British English for IELTS standard
-      utterance.rate = 0.88; // Slightly slower for clear phonetic appreciation
+      utterance.lang = 'en-GB';
+      utterance.rate = 0.88;
       window.speechSynthesis.speak(utterance);
+    }
+  };
+
+  // Generate on-demand AI Mnemonic using Gemini 3.5 Flash
+  const handleGenerateAiMnemonic = async () => {
+    if (!currentItem) return;
+    soundFx.playClick();
+    setAiMnemonicLoading(true);
+
+    try {
+      const keyToUse = geminiApiKey || localStorage.getItem('ielts_gemini_api_key') || '';
+      const result = await generateMnemonicWithGemini(keyToUse, {
+        word: currentItem.band8Word,
+        meaning: currentItem.indonesianMeaning,
+        basic: currentItem.band5Basic
+      });
+
+      if (result && result.mnemonic) {
+        setDynamicMnemonics(prev => ({
+          ...prev,
+          [currentItem.id]: result
+        }));
+        soundFx.playCorrect();
+        confetti({ particleCount: 40, spread: 50 });
+      }
+    } catch (err) {
+      console.warn('AI Mnemonic error:', err);
+    } finally {
+      setAiMnemonicLoading(false);
     }
   };
 
@@ -99,12 +177,12 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
 
     if (status === 'mastered' && !wasMastered) {
       soundFx.playLevelUp();
-      confetti({ particleCount: 60, spread: 60, origin: { y: 0.7 } });
+      confetti({ particleCount: 50, spread: 60, origin: { y: 0.7 } });
       onAddXp(25);
     }
 
     // Auto next card after rating
-    if (currentIndex < filteredItems.length - 1) {
+    if (currentIndex < activeItemList.length - 1) {
       setTimeout(() => {
         setIsFlipped(false);
         setCurrentIndex(prev => prev + 1);
@@ -123,46 +201,37 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
       soundFx.playCorrect();
       confetti({ particleCount: 70, spread: 70, origin: { y: 0.6 } });
       onAddXp(35);
-      // Mark as mastered or learning
-      setMasteryData(prev => ({
-        ...prev,
-        [currentItem.id]: 'mastered'
-      }));
+      setMasteryData(prev => ({ ...prev, [currentItem.id]: 'mastered' }));
     } else {
       soundFx.playWrong();
-      setMasteryData(prev => ({
-        ...prev,
-        [currentItem.id]: 'needs_review'
-      }));
+      setMasteryData(prev => ({ ...prev, [currentItem.id]: 'needs_review' }));
     }
   };
 
-  // Next Cloze Question
   const handleNextQuiz = () => {
     soundFx.playClick();
     setSelectedOption(null);
     setIsAnswerSubmitted(false);
     setShowQuizHint(false);
-    if (currentIndex < filteredItems.length - 1) {
+    if (currentIndex < activeItemList.length - 1) {
       setCurrentIndex(prev => prev + 1);
     } else {
       setCurrentIndex(0);
     }
   };
 
-  // Compute statistics
-  const totalTopicWords = currentTopic.items.length;
-  const masteredCount = currentTopic.items.filter(i => masteryData[i.id] === 'mastered').length;
-  const needsReviewCount = currentTopic.items.filter(i => masteryData[i.id] === 'needs_review').length;
-  const masteryPercent = Math.round((masteredCount / totalTopicWords) * 100);
+  // Global Mastery Count across 6,000 words
+  const totalGlobalMastered = Object.values(masteryData).filter(v => v === 'mastered').length;
+  const globalMasteryPercent = Math.min(100, Math.round((totalGlobalMastered / 6000) * 100));
 
-  const TopicIconComponent = TOPIC_ICONS[currentTopic.icon] || Leaf;
+  // Current display mnemonic
+  const activeMnemonicText = (currentItem && dynamicMnemonics[currentItem.id]?.mnemonic) || (currentItem?.mnemonicHook);
 
   return (
     <div className="max-w-7xl mx-auto space-y-6 pb-16">
       
-      {/* Top Banner */}
-      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/40 border border-slate-800 p-5 sm:p-6 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
+      {/* Top Banner with 6,000 Words Milestone Counter */}
+      <div className="bg-gradient-to-br from-slate-900 via-slate-900 to-indigo-950/50 border border-slate-800 p-5 sm:p-6 rounded-3xl shadow-xl flex flex-col md:flex-row md:items-center justify-between gap-5">
         <div>
           <div className="flex items-center gap-2.5">
             <div className="w-10 h-10 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400">
@@ -171,172 +240,279 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-xl font-black text-white tracking-tight">
-                  Vocab Memory Vault
+                  Vocab Memory Vault 6000
                 </h2>
                 <span className="text-[10px] font-extrabold px-2.5 py-0.5 rounded-full bg-gradient-to-r from-amber-500/20 to-orange-500/20 text-amber-300 border border-amber-500/30">
-                  Teknik Mnemonic & Retensi
+                  Target: 6.000 Kosa Kata
                 </span>
               </div>
               <p className="text-xs text-slate-400 mt-0.5">
-                Kuasai kosa kata & kolokasi resmi IELTS Band 8 di 8 topik esai esensial tanpa takut mudah lupa.
+                Kuasai korpus 6.000 kosa kata akademik IELTS Band 8 dipecah menjadi 300 Paket Harian (@20 kata/hari).
               </p>
             </div>
           </div>
         </div>
 
-        {/* Global Stats */}
-        <div className="flex items-center gap-3 shrink-0">
+        {/* Global Stats & Mode Switcher */}
+        <div className="flex flex-wrap items-center gap-3 shrink-0">
           <div className="px-4 py-2 rounded-2xl bg-slate-950 border border-slate-800 flex items-center gap-3">
             <Trophy className="w-5 h-5 text-amber-400" />
             <div>
-              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Topik {currentTopic.name}</div>
-              <div className="text-sm font-extrabold text-white flex items-center gap-1.5">
-                <span className="text-emerald-400">{masteredCount}</span> / {totalTopicWords} Melekat ({masteryPercent}%)
+              <div className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Milestone 6.000 Kata</div>
+              <div className="text-sm font-extrabold text-white flex items-center gap-1.5 font-mono">
+                <span className="text-emerald-400">{totalGlobalMastered}</span> / 6.000 ({globalMasteryPercent}%)
               </div>
             </div>
           </div>
 
-          {/* Mode Switcher */}
+          {/* View Mode Toggle: Curated Topik vs Korpus 6000 */}
           <div className="flex items-center bg-slate-950 p-1 rounded-2xl border border-slate-800">
             <button
-              onClick={() => { soundFx.playClick(); setMode('flashcard'); }}
+              onClick={() => { soundFx.playClick(); setViewMode('curated'); }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                mode === 'flashcard'
+                viewMode === 'curated'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
-              <Layers className="w-3.5 h-3.5" />
-              <span>Kartu Memori</span>
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Topik Esensial</span>
             </button>
             <button
-              onClick={() => { soundFx.playClick(); setMode('cloze'); }}
+              onClick={() => { soundFx.playClick(); setViewMode('corpus6000'); }}
               className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                mode === 'cloze'
+                viewMode === 'corpus6000'
                   ? 'bg-indigo-600 text-white shadow-md'
                   : 'text-slate-400 hover:text-white'
               }`}
             >
               <BookOpen className="w-3.5 h-3.5" />
-              <span>Kuis Kalimat (+35 XP)</span>
+              <span>Korpus 6.000 Kata</span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* 8 Topics Selector Grid */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
-        {VOCAB_TOPICS.map((topic) => {
-          const Icon = TOPIC_ICONS[topic.icon] || Leaf;
-          const isSelected = activeTopicId === topic.id;
-          const tMastered = topic.items.filter(i => masteryData[i.id] === 'mastered').length;
-          const tTotal = topic.items.length;
+      {/* VIEW 1: CURATED 8 TOPICS VIEW */}
+      {viewMode === 'curated' ? (
+        <div className="space-y-4">
+          
+          {/* 8 Topics Selector Grid */}
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2">
+            {VOCAB_TOPICS.map((topic) => {
+              const Icon = TOPIC_ICONS[topic.icon] || Leaf;
+              const isSelected = activeTopicId === topic.id;
+              const tMastered = topic.items.filter(i => masteryData[i.id] === 'mastered').length;
+              const tTotal = topic.items.length;
 
-          return (
-            <button
-              key={topic.id}
-              onClick={() => {
-                soundFx.playClick();
-                setActiveTopicId(topic.id);
-              }}
-              className={`p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between group ${
-                isSelected
-                  ? `bg-slate-900 border-indigo-500 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/30 scale-[1.02]`
-                  : 'bg-slate-900/60 border-slate-800 hover:bg-slate-900 hover:border-slate-700'
-              }`}
-            >
-              <div className="flex items-center justify-between mb-2">
-                <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
-                  isSelected ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 group-hover:text-slate-200'
-                }`}>
-                  <Icon className="w-4 h-4" />
-                </div>
-                <span className="text-[10px] font-bold text-slate-400 font-mono">
-                  {tMastered}/{tTotal}
-                </span>
-              </div>
-              <div>
-                <span className={`text-xs font-bold block truncate ${isSelected ? 'text-white' : 'text-slate-300'}`}>
-                  {topic.name}
-                </span>
-                <span className="text-[10px] text-slate-500 block truncate">
-                  {topic.englishName}
-                </span>
-              </div>
-            </button>
-          );
-        })}
-      </div>
+              return (
+                <button
+                  key={topic.id}
+                  onClick={() => {
+                    soundFx.playClick();
+                    setActiveTopicId(topic.id);
+                  }}
+                  className={`p-2.5 rounded-2xl border text-left transition-all relative flex flex-col justify-between group ${
+                    isSelected
+                      ? `bg-slate-900 border-indigo-500 shadow-lg shadow-indigo-500/10 ring-2 ring-indigo-500/30 scale-[1.02]`
+                      : 'bg-slate-900/60 border-slate-800 hover:bg-slate-900 hover:border-slate-700'
+                  }`}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <div className={`w-7 h-7 rounded-xl flex items-center justify-center ${
+                      isSelected ? 'bg-indigo-600 text-white shadow' : 'bg-slate-800 text-slate-400 group-hover:text-slate-200'
+                    }`}>
+                      <Icon className="w-4 h-4" />
+                    </div>
+                    <span className="text-[10px] font-bold text-slate-400 font-mono">
+                      {tMastered}/{tTotal}
+                    </span>
+                  </div>
+                  <div>
+                    <span className={`text-xs font-bold block truncate ${isSelected ? 'text-white' : 'text-slate-300'}`}>
+                      {topic.name}
+                    </span>
+                    <span className="text-[10px] text-slate-500 block truncate">
+                      {topic.englishName}
+                    </span>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
 
-      {/* Filter Mastery Sub-bar */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-slate-900/80 p-3 rounded-2xl border border-slate-800 text-xs">
-        <div className="flex items-center gap-2">
-          <span className="text-slate-400 font-semibold">Filter Kosakata:</span>
-          <button
-            onClick={() => setFilterMastery('all')}
-            className={`px-2.5 py-1 rounded-lg font-bold transition ${
-              filterMastery === 'all'
-                ? 'bg-slate-800 text-white border border-slate-700'
-                : 'text-slate-400 hover:text-slate-200'
-            }`}
-          >
-            Semua ({currentTopic.items.length})
-          </button>
-          <button
-            onClick={() => setFilterMastery('needs_review')}
-            className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1.5 ${
-              filterMastery === 'needs_review'
-                ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                : 'text-rose-400/70 hover:text-rose-300'
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-rose-500" />
-            <span>Perlu Diulang ({needsReviewCount})</span>
-          </button>
-          <button
-            onClick={() => setFilterMastery('mastered')}
-            className={`px-2.5 py-1 rounded-lg font-bold transition flex items-center gap-1.5 ${
-              filterMastery === 'mastered'
-                ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40'
-                : 'text-emerald-400/70 hover:text-emerald-300'
-            }`}
-          >
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
-            <span>Sudah Melekat ({masteredCount})</span>
-          </button>
+          {/* Mode Switcher for Curated: Flashcard vs Cloze Quiz */}
+          <div className="flex items-center justify-between bg-slate-900/80 p-2.5 rounded-2xl border border-slate-800 text-xs">
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400 font-semibold">Mode Belajar:</span>
+              <button
+                onClick={() => { soundFx.playClick(); setMode('flashcard'); }}
+                className={`px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                  mode === 'flashcard' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <Layers className="w-3.5 h-3.5" />
+                <span>Kartu Flashcard</span>
+              </button>
+              <button
+                onClick={() => { soundFx.playClick(); setMode('cloze'); }}
+                className={`px-3 py-1 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                  mode === 'cloze' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:text-white'
+                }`}
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Kuis Kalimat (+35 XP)</span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <span className="text-slate-400">Filter:</span>
+              <button
+                onClick={() => setFilterMastery('all')}
+                className={`px-2 py-0.5 rounded font-bold ${filterMastery === 'all' ? 'bg-slate-800 text-white' : 'text-slate-400'}`}
+              >
+                Semua
+              </button>
+              <button
+                onClick={() => setFilterMastery('needs_review')}
+                className={`px-2 py-0.5 rounded font-bold ${filterMastery === 'needs_review' ? 'bg-rose-500/20 text-rose-300' : 'text-slate-400'}`}
+              >
+                🔴 Perlu Diulang
+              </button>
+              <button
+                onClick={() => setFilterMastery('mastered')}
+                className={`px-2 py-0.5 rounded font-bold ${filterMastery === 'mastered' ? 'bg-emerald-500/20 text-emerald-300' : 'text-slate-400'}`}
+              >
+                🟢 Melekat
+              </button>
+            </div>
+          </div>
+
         </div>
+      ) : (
 
-        <div className="text-[11px] text-slate-400">
-          Topik: <b className="text-slate-200">{currentTopic.name}</b> ({currentTopic.description})
+        /* VIEW 2: 6,000 WORDS CORPUS VIEW (300 STUDY SETS & LIVE SEARCH) */
+        <div className="bg-slate-900 border border-slate-800 p-4 rounded-3xl space-y-4 shadow-lg">
+          
+          {/* Subheader with 300 Sets Selector & Instant Search */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+            
+            {/* Search Input */}
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-500 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Cari kata Inggris / arti Indonesia di antara 6.000 kata..."
+                className="w-full pl-10 pr-4 py-2 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white placeholder:text-slate-600 focus:border-indigo-500 outline-none transition"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Study Set Selector (Set 1 to 300) */}
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-400 font-semibold shrink-0">Paket Harian:</span>
+              <div className="flex items-center bg-slate-950 border border-slate-800 rounded-xl p-1">
+                <button
+                  onClick={() => setStudySetIndex(prev => Math.max(1, prev - 1))}
+                  disabled={studySetIndex <= 1 || searchQuery.length > 0}
+                  className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                </button>
+                <span className="text-xs font-mono font-extrabold text-indigo-400 px-2 min-w-[90px] text-center">
+                  Set #{studySetIndex} / 300
+                </span>
+                <button
+                  onClick={() => setStudySetIndex(prev => Math.min(300, prev + 1))}
+                  disabled={studySetIndex >= 300 || searchQuery.length > 0}
+                  className="p-1 rounded text-slate-400 hover:text-white disabled:opacity-30"
+                >
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Tier Filter */}
+            <div className="flex items-center gap-1.5 bg-slate-950 border border-slate-800 p-1 rounded-xl text-xs">
+              <span className="text-slate-500 text-[10px] px-1 font-bold">TIER:</span>
+              <button
+                onClick={() => setTierFilter('all')}
+                className={`px-2 py-0.5 rounded font-bold ${tierFilter === 'all' ? 'bg-indigo-600 text-white' : 'text-slate-400'}`}
+              >
+                Semua
+              </button>
+              <button
+                onClick={() => setTierFilter('1')}
+                className={`px-2 py-0.5 rounded font-bold ${tierFilter === '1' ? 'bg-blue-600 text-white' : 'text-slate-400'}`}
+                title="Tier 1: Pondasi AWL"
+              >
+                T1 (AWL)
+              </button>
+              <button
+                onClick={() => setTierFilter('2')}
+                className={`px-2 py-0.5 rounded font-bold ${tierFilter === '2' ? 'bg-purple-600 text-white' : 'text-slate-400'}`}
+                title="Tier 2: C1 Advanced"
+              >
+                T2 (C1)
+              </button>
+              <button
+                onClick={() => setTierFilter('3')}
+                className={`px-2 py-0.5 rounded font-bold ${tierFilter === '3' ? 'bg-pink-600 text-white' : 'text-slate-400'}`}
+                title="Tier 3: C2 Grandmaster"
+              >
+                T3 (C2)
+              </button>
+            </div>
+
+          </div>
+
+          <div className="text-[11px] text-slate-400 flex items-center justify-between border-t border-slate-800 pt-2">
+            <span>
+              Menampilkan {activeItemList.length} kata {searchQuery ? `untuk pencarian "${searchQuery}"` : `pada Paket Harian #${studySetIndex} (@20 kata)`}
+            </span>
+            <span className="text-emerald-400 font-semibold">
+              Kapasitas Terindeks: 6.000 Kosakata Band 8
+            </span>
+          </div>
+
         </div>
-      </div>
+      )}
 
-      {/* If No Items in filtered view */}
-      {filteredItems.length === 0 ? (
+      {/* MAIN CARD STACK AREA */}
+      {activeItemList.length === 0 ? (
         <div className="p-12 text-center bg-slate-900/50 border border-slate-800 rounded-3xl space-y-3">
           <AlertCircle className="w-8 h-8 text-amber-400 mx-auto" />
-          <h3 className="text-sm font-bold text-slate-200">Tidak ada kosa kata dalam kategori filter ini</h3>
+          <h3 className="text-sm font-bold text-slate-200">Tidak ada kosa kata ditemukan</h3>
           <p className="text-xs text-slate-400 max-w-sm mx-auto">
-            Anda belum memiliki kosa kata yang ditandai dalam filter ini untuk topik {currentTopic.name}.
+            {searchQuery ? `Pencarian "${searchQuery}" tidak cocok dengan data kata.` : 'Tidak ada kartu pada filter ini.'}
           </p>
           <button
-            onClick={() => setFilterMastery('all')}
+            onClick={() => { setSearchQuery(''); setFilterMastery('all'); }}
             className="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl text-xs font-bold transition"
           >
-            Tampilkan Semua Kosa Kata
+            Reset Pencarian
           </button>
         </div>
-      ) : mode === 'flashcard' ? (
+      ) : mode === 'flashcard' || viewMode === 'corpus6000' ? (
         
         /* ========================================================================= */
-        /* MODE 1: ACTIVE RECALL FLASHCARD                                           */
+        /* FLASHCARD VIEW WITH ON-DEMAND AI MNEMONIC                                 */
         /* ========================================================================= */
         <div className="max-w-2xl mx-auto space-y-5">
           
-          {/* Card Navigation Header */}
+          {/* Navigation Subheader */}
           <div className="flex items-center justify-between text-xs text-slate-400 px-2">
             <span className="font-bold flex items-center gap-1.5">
-              <span>Kartu {currentIndex + 1} dari {filteredItems.length}</span>
+              <span>Kartu {currentIndex + 1} dari {activeItemList.length}</span>
               {masteryData[currentItem.id] === 'mastered' && (
                 <span className="px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-[10px] font-bold border border-emerald-500/30">
                   Melekat 🟢
@@ -349,14 +525,27 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
               )}
             </span>
 
-            <button
-              onClick={() => speakWord(currentItem.band8Word)}
-              className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-semibold transition"
-              title="Dengarkan pengucapan kata aksen British"
-            >
-              <Volume2 className="w-4 h-4" />
-              <span>Dengarkan Audio Pelafalan</span>
-            </button>
+            <div className="flex items-center gap-3">
+              {/* On-Demand AI Mnemonic Button */}
+              <button
+                onClick={handleGenerateAiMnemonic}
+                disabled={aiMnemonicLoading}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-indigo-600/20 hover:bg-indigo-600/40 text-indigo-300 border border-indigo-500/30 text-[11px] font-bold transition disabled:opacity-50"
+                title="Buat Jembatan Keledai Otomatis dengan Gemini AI"
+              >
+                <Bot className="w-3.5 h-3.5 text-indigo-400" />
+                <span>{aiMnemonicLoading ? 'Meracik Mnemonic...' : '✨ Mnemonic AI'}</span>
+              </button>
+
+              <button
+                onClick={() => speakWord(currentItem.band8Word)}
+                className="flex items-center gap-1 text-indigo-400 hover:text-indigo-300 font-semibold transition"
+                title="Dengarkan pengucapan kata aksen British"
+              >
+                <Volume2 className="w-4 h-4" />
+                <span>Audio</span>
+              </button>
+            </div>
           </div>
 
           {/* Flashcard Box with Flip Action */}
@@ -384,7 +573,7 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
 
             {/* Main Content Area */}
             {!isFlipped ? (
-              /* CARD FRONT: Prompt to Recall */
+              /* CARD FRONT */
               <div className="my-auto py-6 space-y-4 text-center">
                 <div className="space-y-1">
                   <span className="text-[11px] font-bold uppercase tracking-widest text-slate-500">
@@ -414,7 +603,7 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
                 </div>
               </div>
             ) : (
-              /* CARD BACK: Band 8 Reveal + Mnemonic Hook */
+              /* CARD BACK */
               <div className="my-auto py-2 space-y-4">
                 
                 {/* Target Band 8 Word with Audio Button */}
@@ -439,21 +628,28 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
                   </div>
                 </div>
 
-                {/* Mnemonic Hook Box (Crucial for memory-struggling users) */}
+                {/* Mnemonic Hook Box */}
                 <div 
                   onClick={(e) => e.stopPropagation()} 
                   className="p-3.5 sm:p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 space-y-1.5"
                 >
-                  <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-300">
-                    <Lightbulb className="w-4 h-4 text-amber-400" />
-                    <span>Jembatan Memori / Mnemonic (Anti-Lupa):</span>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 text-xs font-extrabold text-amber-300">
+                      <Lightbulb className="w-4 h-4 text-amber-400" />
+                      <span>Jembatan Memori / Mnemonic (Anti-Lupa):</span>
+                    </div>
+                    {dynamicMnemonics[currentItem.id] && (
+                      <span className="text-[10px] bg-indigo-500/30 text-indigo-300 px-2 py-0.5 rounded-full font-mono">
+                        AI Generated
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-amber-100/90 leading-relaxed font-medium">
-                    {currentItem.mnemonicHook}
+                    {activeMnemonicText}
                   </p>
                 </div>
 
-                {/* Model Essay Sentence */}
+                {/* Model Sentence */}
                 <div 
                   onClick={(e) => e.stopPropagation()} 
                   className="p-3 sm:p-3.5 rounded-2xl bg-slate-950 border border-slate-800 space-y-1"
@@ -520,17 +716,17 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
               <span>Sebelumnya</span>
             </button>
 
-            <span className="text-xs text-slate-500 font-medium">
-              Gunakan tombol peringkat di atas untuk lanjut otomatis
+            <span className="text-xs text-slate-500 font-medium font-mono">
+              {currentIndex + 1} / {activeItemList.length}
             </span>
 
             <button
               onClick={() => {
                 soundFx.playClick();
                 setIsFlipped(false);
-                setCurrentIndex(prev => Math.min(filteredItems.length - 1, prev + 1));
+                setCurrentIndex(prev => Math.min(activeItemList.length - 1, prev + 1));
               }}
-              disabled={currentIndex >= filteredItems.length - 1}
+              disabled={currentIndex >= activeItemList.length - 1}
               className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300 text-xs font-bold flex items-center gap-1.5 transition"
             >
               <span>Berikutnya</span>
@@ -542,16 +738,13 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
       ) : (
 
         /* ========================================================================= */
-        /* MODE 2: CLOZE CONTEXT QUIZ                                                */
+        /* MODE 2: CLOZE CONTEXT QUIZ (FOR CURATED MODE)                             */
         /* ========================================================================= */
         <div className="max-w-2xl mx-auto space-y-5">
-          
           <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 space-y-6 shadow-xl">
-            
-            {/* Question Counter & Hint Toggle */}
             <div className="flex items-center justify-between text-xs">
               <span className="font-bold text-slate-400">
-                Soal {currentIndex + 1} dari {filteredItems.length}
+                Soal {currentIndex + 1} dari {activeItemList.length}
               </span>
               <button
                 onClick={() => {
@@ -561,28 +754,26 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
                 className="text-xs text-amber-400 hover:text-amber-300 flex items-center gap-1 font-bold"
               >
                 <Lightbulb className="w-3.5 h-3.5" />
-                <span>{showQuizHint ? 'Sembunyikan Petunjuk Mnemonic' : 'Lihat Petunjuk Mnemonic'}</span>
+                <span>{showQuizHint ? 'Sembunyikan Petunjuk' : 'Lihat Petunjuk Mnemonic'}</span>
               </button>
             </div>
 
-            {/* Optional Mnemonic Hint */}
             {showQuizHint && (
               <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-xs text-amber-200">
                 <b>💡 Tips Mengingat:</b> {currentItem.mnemonicHook}
               </div>
             )}
 
-            {/* Cloze Sentence Box */}
             <div className="p-5 rounded-2xl bg-slate-950 border border-slate-800 space-y-2">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block">
                 Lengkapi Kalimat Esai IELTS Ini dengan Frasa Band 8 yang Paling Tepat:
               </span>
               <p className="text-sm sm:text-base text-slate-200 font-serif leading-relaxed">
-                "{currentItem.clozeSentence.split('[____]')[0]}
+                "{currentItem.clozeSentence ? currentItem.clozeSentence.split('[____]')[0] : 'In recent years, governments must '}
                 <span className="font-mono font-bold text-indigo-400 bg-indigo-500/20 px-2 py-0.5 rounded border border-indigo-500/40">
                   {selectedOption ? selectedOption : '[ _______________ ]'}
                 </span>
-                {currentItem.clozeSentence.split('[____]')[1]}"
+                {currentItem.clozeSentence ? currentItem.clozeSentence.split('[____]')[1] : ' for sustainable growth.'}"
               </p>
               <div className="pt-2 text-xs text-slate-400">
                 Makna yang dimaksud: <b className="text-slate-200">{currentItem.indonesianMeaning}</b>
@@ -591,9 +782,9 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
 
             {/* Options */}
             <div className="space-y-2.5">
-              {currentItem.clozeOptions.map((opt, oIdx) => {
+              {(currentItem.clozeOptions || [currentItem.band8Word, currentItem.band5Basic, 'make normal change']).map((opt, oIdx) => {
                 const isSelected = selectedOption === opt;
-                const isCorrect = opt === currentItem.clozeAnswer;
+                const isCorrect = opt === (currentItem.clozeAnswer || currentItem.band8Word);
                 
                 let btnStyle = 'bg-slate-800/70 border-slate-700/60 text-slate-200 hover:bg-slate-800 hover:border-slate-600';
                 if (isAnswerSubmitted) {
@@ -625,34 +816,8 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
               })}
             </div>
 
-            {/* Feedback & Next Button */}
             {isAnswerSubmitted && (
               <div className="pt-3 border-t border-slate-800 space-y-3">
-                <div className={`p-3.5 rounded-2xl text-xs ${
-                  selectedOption === currentItem.clozeAnswer
-                    ? 'bg-emerald-500/10 border border-emerald-500/30 text-emerald-300'
-                    : 'bg-rose-500/10 border border-rose-500/30 text-rose-300'
-                }`}>
-                  {selectedOption === currentItem.clozeAnswer ? (
-                    <div className="space-y-1">
-                      <div className="font-bold flex items-center gap-1.5">
-                        <Sparkles className="w-4 h-4 text-emerald-400" />
-                        <span>Luar Biasa! Jawaban Anda Tepat (+35 XP).</span>
-                      </div>
-                      <p className="text-slate-300">
-                        Frasa <b>"{currentItem.band8Word}"</b> memberikan skor tinggi pada kriteria Lexical Resource karena merupakan kolokasi akademis yang presisi.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="font-bold">Jawaban yang tepat adalah: "{currentItem.clozeAnswer}"</div>
-                      <p className="text-slate-300">
-                        <b>Tips Mnemonic:</b> {currentItem.mnemonicHook}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
                 <button
                   onClick={handleNextQuiz}
                   className="w-full py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:opacity-90 text-white rounded-xl text-xs font-bold shadow-lg shadow-indigo-600/30 flex items-center justify-center gap-2 transition"
@@ -664,7 +829,6 @@ export default function VocabMemoryVault({ xp, onAddXp }) {
             )}
 
           </div>
-
         </div>
       )}
 

@@ -111,3 +111,58 @@ Evaluate this essay and return a JSON object with this exact schema:
 
   throw lastError || new Error('Gagal menghubungi Gemini API. Periksa kembali API Key Anda.');
 }
+
+export async function generateMnemonicWithGemini(apiKey, { word, meaning, basic }) {
+  if (!apiKey) {
+    throw new Error('API Key Gemini belum diset. Silakan masukkan API Key di menu Pengaturan.');
+  }
+
+  const prompt = `You are a memory specialist and IELTS master.
+Given the academic phrase/word: "${word}"
+Indonesian Meaning: "${meaning}"
+Everyday Equivalent: "${basic}"
+
+Create a vivid, memorable Mnemonic Hook (jembatan keledai / asosiasi bunyi / analogi visual dalam bahasa Indonesia) specifically for an Indonesian student who struggles to remember difficult vocabulary.
+Also provide a high-scoring IELTS Writing Task 2 sample sentence.
+
+Return this exact JSON:
+{
+  "mnemonic": "Penjelasan jembatan keledai yang mudah diingat dalam bahasa Indonesia...",
+  "example": "Contoh kalimat esai formal IELTS Band 8.5..."
+}`;
+
+  const modelsToTry = [PRIMARY_MODEL, ...FALLBACK_MODELS];
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ role: 'user', parts: [{ text: prompt }] }],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.3
+            }
+          })
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const raw = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (raw) return JSON.parse(raw);
+      } else {
+        const err = await response.json().catch(() => ({}));
+        lastError = new Error(err.error?.message || `Status ${response.status}`);
+      }
+    } catch (err) {
+      lastError = err;
+    }
+  }
+
+  throw lastError || new Error('Gagal menghubungi Gemini AI.');
+}
