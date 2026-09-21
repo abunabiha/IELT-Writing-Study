@@ -64,3 +64,23 @@ test('Every puzzle item provides valid completedEnglish and Band 8 sentences for
     assert.ok(item.powerUpBand8.upgraded.trim().length > 15, `Item ${item.id} upgraded typing target must be at least 15 chars`);
   }
 });
+
+test('PUZZLE_WORD_BY_WORD_MAP provides accurate word-by-word pairs and semakna translation for Band 5 items', async () => {
+  const { PUZZLE_WORD_BY_WORD_MAP, getPuzzleWordByWordData } = await import('../src/data/puzzleWordByWordData.js');
+
+  const b5Items = BEGINNER_PUZZLE_LEVELS.filter(l => l.bandTier === 'band5');
+  assert.strictEqual(b5Items.length, 30);
+
+  for (const item of b5Items) {
+    const wbwData = getPuzzleWordByWordData(item);
+    assert.ok(wbwData, `Word-by-word data must exist for ${item.id}`);
+    assert.ok(wbwData.translation && wbwData.translation.length > 10, `Translation must be valid for ${item.id}`);
+    assert.ok(Array.isArray(wbwData.wordByWord) && wbwData.wordByWord.length >= 3, `wordByWord must have at least 3 pairs for ${item.id}`);
+
+    for (const pair of wbwData.wordByWord) {
+      assert.ok(pair.standard, `Pair must have standard word in ${item.id}`);
+      assert.ok(pair.upgraded, `Pair must have upgraded word in ${item.id}`);
+      assert.ok(pair.meaning, `Pair must have Indonesian meaning in ${item.id}`);
+    }
+  }
+});
