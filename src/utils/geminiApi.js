@@ -1,5 +1,8 @@
 // Gemini API Client for Deep IELTS Band 8 Examiner Evaluation
 
+const PRIMARY_MODEL = 'gemini-3.6-flash';
+const FALLBACK_MODELS = ['gemini-2.5-flash', 'gemini-2.0-flash', 'gemini-1.5-flash'];
+
 export async function evaluateEssayWithGemini(apiKey, { taskType, prompt, essayText }) {
   if (!apiKey) {
     throw new Error('API Key Gemini belum diset. Silakan masukkan API Key di menu Pengaturan (ikon gear).');
@@ -52,43 +55,54 @@ Evaluate this essay and return a JSON object with this exact schema:
   ]
 }`;
 
-  const response = await fetch(
-    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-    {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        contents: [
-          {
-            role: 'user',
-            parts: [{ text: `${systemInstruction}\n\n${userContent}` }]
-          }
-        ],
-        generationConfig: {
-          responseMimeType: 'application/json',
-          temperature: 0.2,
+  const modelsToTry = [PRIMARY_MODEL, ...FALLBACK_MODELS];
+  let lastError = null;
+
+  for (const model of modelsToTry) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `${systemInstruction}\n\n${userContent}` }]
+              }
+            ],
+            generationConfig: {
+              responseMimeType: 'application/json',
+              temperature: 0.2,
+            }
+          }),
         }
-      }),
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawText) {
+          try {
+            return JSON.parse(rawText);
+          } catch (jsonErr) {
+            console.warn(`Error parsing JSON with model ${model}:`, jsonErr);
+          }
+        }
+      } else {
+        const errData = await response.json().catch(() => ({}));
+        const errMsg = errData.error?.message || `Status ${response.status}`;
+        lastError = new Error(errMsg);
+        console.warn(`Model ${model} gagal: ${errMsg}. Mencoba model alternatif...`);
+      }
+    } catch (netErr) {
+      lastError = netErr;
+      console.warn(`Network error with model ${model}:`, netErr);
     }
-  );
-
-  if (!response.ok) {
-    const errData = await response.json().catch(() => ({}));
-    throw new Error(errData.error?.message || `Gagal menghubungi Gemini API (Status ${response.status})`);
   }
 
-  const data = await response.json();
-  const rawText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-  if (!rawText) {
-    throw new Error('Tidak ada respon dari Gemini API.');
-  }
-
-  try {
-    return JSON.parse(rawText);
-  } catch (e) {
-    console.error('Error parsing JSON from Gemini:', rawText);
-    throw new Error('Gagal memproses format respon evaluasi.');
-  }
+  throw lastError || new Error('Gagal menghubungi Gemini API. Periksa kembali API Key Anda.');
 }

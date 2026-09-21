@@ -64,7 +64,7 @@ export default function SettingsModal({
             <span>Google Gemini API Key (Opsional)</span>
           </label>
           <p className="text-xs text-slate-400 leading-relaxed">
-            Digunakan untuk evaluasi esai mendalam dengan Gemini 2.5 Flash. Kunci API hanya disimpan di peramban (localStorage) Anda dan tidak pernah dikirim ke server pihak ketiga manapun.
+            Digunakan untuk evaluasi esai mendalam dengan Gemini 3.6 Flash. Kunci API hanya disimpan di peramban (localStorage) Anda dan tidak pernah dikirim ke server pihak ketiga manapun.
           </p>
           <div className="flex gap-2">
             <input

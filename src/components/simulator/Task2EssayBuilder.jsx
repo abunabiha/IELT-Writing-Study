@@ -432,7 +432,7 @@ export default function Task2EssayBuilder({ geminiApiKey, xp, onAddXp }) {
                 </span>
                 {geminiApiKey ? (
                   <span className="text-[10px] bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded-full font-bold">
-                    Powered by Gemini 2.5
+                    Powered by Gemini 3.6
                   </span>
                 ) : (
                   <span className="text-[10px] bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full">
