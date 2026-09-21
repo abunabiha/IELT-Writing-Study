@@ -2,10 +2,10 @@ import test from 'node:test';
 import assert from 'node:assert';
 import { VOCAB_MINDMAP_DATA } from '../src/data/vocabMindMapData.js';
 
-test('VOCAB_MINDMAP_DATA contains 6 macro domains (Lapis 1)', () => {
-  assert.strictEqual(VOCAB_MINDMAP_DATA.length, 6);
+test('VOCAB_MINDMAP_DATA contains 12 macro domains (Lapis 1) spanning 6,000 words', () => {
+  assert.strictEqual(VOCAB_MINDMAP_DATA.length, 12);
   const themeIds = VOCAB_MINDMAP_DATA.map(t => t.id);
-  assert.deepStrictEqual(themeIds, ['env', 'tech', 'edu', 'health', 'econ', 'soc']);
+  assert.deepStrictEqual(themeIds, ['env', 'tech', 'edu', 'soc', 'hlt', 'glb', 'eco', 'gov', 'sci', 'art', 'urb', 'log']);
 
   for (const theme of VOCAB_MINDMAP_DATA) {
     assert.ok(theme.id && theme.titleEn && theme.titleId, `Theme ${theme.id} must have id and bilingual titles`);
