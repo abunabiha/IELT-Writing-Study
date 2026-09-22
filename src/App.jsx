@@ -18,75 +18,101 @@ import UserProfileModal from './components/profile/UserProfileModal';
 import { soundFx } from './utils/soundEffects';
 import confetti from 'canvas-confetti';
 
+// Resilient localStorage wrapper that never throws in incognito or restricted browser contexts
+const safeStorage = {
+  get: (key, fallback = null) => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return fallback;
+      const val = localStorage.getItem(key);
+      return val !== null ? val : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  },
+  getJSON: (key, fallback = null) => {
+    try {
+      if (typeof window === 'undefined' || !window.localStorage) return fallback;
+      const val = localStorage.getItem(key);
+      return val ? JSON.parse(val) : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  },
+  set: (key, val) => {
+    try {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+      }
+    } catch (e) {}
+  }
+};
+
 export default function App() {
   // Persistent user profile state (Name, Target Band, Avatar)
   const [userProfile, setUserProfile] = useState(() => {
-    try {
-      const saved = localStorage.getItem('ielts_user_profile');
-      return saved ? JSON.parse(saved) : null;
-    } catch (e) {
-      return null;
-    }
+    return safeStorage.getJSON('ielts_user_profile', null);
   });
 
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Persistent user state
   const [xp, setXp] = useState(() => {
-    const saved = localStorage.getItem('ielts_game_xp');
-    return saved ? parseInt(saved, 10) : 100;
+    const saved = safeStorage.get('ielts_game_xp', '100');
+    const parsed = parseInt(saved, 10);
+    return isNaN(parsed) ? 100 : parsed;
   });
 
   const [streak, setStreak] = useState(() => {
-    const saved = localStorage.getItem('ielts_game_streak');
-    return saved ? parseInt(saved, 10) : 3;
+    const saved = safeStorage.get('ielts_game_streak', '3');
+    const parsed = parseInt(saved, 10);
+    return isNaN(parsed) ? 3 : parsed;
   });
 
   const [completedDrills, setCompletedDrills] = useState(() => {
-    const saved = localStorage.getItem('ielts_game_drills');
-    return saved ? JSON.parse(saved) : [];
+    const saved = safeStorage.getJSON('ielts_game_drills', []);
+    return Array.isArray(saved) ? saved : [];
   });
 
   const [geminiApiKey, setGeminiApiKey] = useState(() => {
-    return localStorage.getItem('ielts_gemini_api_key') || '';
+    return safeStorage.get('ielts_gemini_api_key', '');
   });
 
   const [soundMuted, setSoundMuted] = useState(() => {
-    return localStorage.getItem('ielts_sound_muted') === 'true';
+    return safeStorage.get('ielts_sound_muted', 'false') === 'true';
   });
 
   // Persistent active tab (resumes where user left off)
   const [activeTab, setActiveTab] = useState(() => {
-    return localStorage.getItem('ielts_active_tab') || 'beginnerPuzzle';
+    return safeStorage.get('ielts_active_tab', 'beginnerPuzzle');
   });
   const [isRubricOpen, setIsRubricOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // Sync activeTab to localStorage
   useEffect(() => {
-    localStorage.setItem('ielts_active_tab', activeTab);
+    safeStorage.set('ielts_active_tab', activeTab);
   }, [activeTab]);
 
   // Daily streak check with ielts_last_active_date
   useEffect(() => {
     try {
       const today = new Date().toISOString().split('T')[0];
-      const lastDate = localStorage.getItem('ielts_last_active_date');
+      const lastDate = safeStorage.get('ielts_last_active_date', null);
       if (!lastDate) {
-        localStorage.setItem('ielts_last_active_date', today);
+        safeStorage.set('ielts_last_active_date', today);
       } else if (lastDate !== today) {
         const diffDays = Math.floor((new Date(today) - new Date(lastDate)) / (1000 * 60 * 60 * 24));
         if (diffDays === 1) {
           setStreak(prev => {
             const next = prev + 1;
-            localStorage.setItem('ielts_game_streak', String(next));
+            safeStorage.set('ielts_game_streak', String(next));
             return next;
           });
         } else if (diffDays > 1) {
           setStreak(1);
-          localStorage.setItem('ielts_game_streak', '1');
+          safeStorage.set('ielts_game_streak', '1');
         }
-        localStorage.setItem('ielts_last_active_date', today);
+        safeStorage.set('ielts_last_active_date', today);
       }
     } catch (err) {
       console.warn('Streak check error:', err);
@@ -103,17 +129,18 @@ export default function App() {
   // Sync sound muted with soundFx
   useEffect(() => {
     soundFx.setMuted(soundMuted);
-    localStorage.setItem('ielts_sound_muted', String(soundMuted));
+    safeStorage.set('ielts_sound_muted', String(soundMuted));
   }, [soundMuted]);
 
   // Persist XP and completed drills
   useEffect(() => {
-    localStorage.setItem('ielts_game_xp', String(xp));
+    safeStorage.set('ielts_game_xp', String(xp));
   }, [xp]);
 
   useEffect(() => {
-    localStorage.setItem('ielts_game_drills', JSON.stringify(completedDrills));
+    safeStorage.set('ielts_game_drills', completedDrills);
   }, [completedDrills]);
+
 
   const level = Math.floor(xp / 500) + 1;
   const getLevelTitle = (lvl) => {

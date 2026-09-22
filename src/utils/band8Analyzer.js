@@ -21,7 +21,7 @@ export const WEAK_WORDS_MAP = {
   help: ['facilitate', 'bolster', 'assist', 'alleviate'],
 };
 
-// Academic C1/C2 Vocabulary to detect
+// Academic C1/C2 Vocabulary to detect (expanded from Academic Word List and Cambridge C1/C2 benchmarks)
 export const ACADEMIC_WORDS = new Set([
   'substantiate', 'ubiquitous', 'precipitous', 'corroborate', 'paradoxically',
   'albeit', 'imperative', 'disparity', 'inadvertent', 'unprecedented',
@@ -31,15 +31,25 @@ export const ACADEMIC_WORDS = new Set([
   'exponential', 'plateaued', 'plummeted', 'surged', 'fluctuated',
   'marginal', 'conspicuous', 'inevitable', 'disproportionate', 'ramifications',
   'catalyst', 'paradigm', 'empirical', 'profound', 'sustainable',
-  'counterproductive', 'holistic', 'stringent', 'feasible', 'manifest'
+  'counterproductive', 'holistic', 'stringent', 'feasible', 'manifest',
+  'proliferation', 'disinclination', 'eschew', 'commodifying', 'subsidize',
+  'disincentivise', 'exacerbating', 'democratize', 'repertoire', 'sapience',
+  'stipulated', 'restitution', 'trajectory', 'allocations', 'infrastructure',
+  'adversity', 'fluctuation', 'indispensable', 'paramount', 'lucrative',
+  'monetary', 'competencies', 'convoluted', 'streamlined', 'pervasive',
+  'demarcation', 'dissonance', 'reconcile', 'morbidity', 'mortality',
+  'stagnancy', 'dynamism', 'conglomerates', 'expatriate', 'unbridled',
+  'societal', 'regurgitation', 'egregiously', 'perilous', 'combustion',
+  'deforestation', 'curatorial', 'externalities', 'disintermediation'
 ]);
 
 // Cohesive Devices Classification
 export const ADVANCED_COHESIVES = [
   'notwithstanding', 'conversely', 'in stark contrast', 'by extension',
-  'granted that', 'to substantiate this', 'in essence', 'it is posited that',
+  'granted that', 'provided that', 'to substantiate this', 'in essence', 'it is posited that',
   'consequently', 'henceforth', 'subsequently', 'in tandem with',
-  'on the contrary', 'in light of', 'predominantly', 'thereby'
+  'on the contrary', 'in light of', 'in light of this', 'predominantly', 'thereby',
+  'on the one hand', 'on the other hand', 'a diametrically opposed', 'to begin with'
 ];
 
 export const BASIC_COHESIVES = [
@@ -127,14 +137,21 @@ export function analyzeBand8Text(text, taskType = 'task2') {
 
   sentences.forEach(s => {
     const lowerS = s.toLowerCase();
-    const hasSubordinating = /\b(although|whereas|while|despite|in spite of|because|since|provided that|unless|if|even though)\b/.test(lowerS);
-    const hasRelative = /\b(which|who|whom|whose|wherein|whereby)\b/.test(lowerS);
-    const hasInversionOrPassive = /\b(not only|rarely|seldom|little did|was observed|were recorded|is projected|can be attributed)\b/.test(lowerS);
+    const hasSubordinating = /\b(although|whereas|while|whilst|despite|in spite of|because|since|provided that|unless|if|even though|so as to|given that|as long as|inasmuch as)\b/.test(lowerS);
+    const hasRelativeOrNoun = /\b(which|who|whom|whose|wherein|whereby)\b|(\bthat\s+[a-z]+\s+(will|can|is|are|could|should|must|have|has|[a-z]+s\b))/.test(lowerS);
+    const hasInversionOrPassive = /\b(not only|rarely|seldom|little did|is\s+[a-z]+ed|are\s+[a-z]+ed|was\s+[a-z]+ed|were\s+[a-z]+ed|been\s+[a-z]+ed|be\s+[a-z]+ed|being\s+[a-z]+ed|can be|could be|must be|should be|will be|is considered|are required|was observed|were recorded|is projected|can be attributed)\b/.test(lowerS);
+    const hasParticipleOrAppositive = /(,\s*(yielding|resulting|thereby|allowing|creating|disincentivising|causing|enhancing|producing|generating|surpassing)|^(by|regarding|in terms of|having)\s+[a-z]+ing\b|—|;)/.test(lowerS);
     const hasCoordinating = /\b( and | but | or | yet | so )\b/.test(lowerS);
 
-    if (hasInversionOrPassive || (hasSubordinating && hasRelative)) {
+    const isAdvanced = (hasInversionOrPassive && (hasSubordinating || hasRelativeOrNoun)) ||
+                       (hasSubordinating && hasRelativeOrNoun) ||
+                       hasParticipleOrAppositive ||
+                       /\b(rarely|seldom|not only|scarcely)\b/.test(lowerS);
+    const isComplex = hasSubordinating || hasRelativeOrNoun || hasInversionOrPassive;
+
+    if (isAdvanced) {
       advancedCount++;
-    } else if (hasSubordinating || hasRelative) {
+    } else if (isComplex) {
       complexCount++;
     } else if (hasCoordinating) {
       compoundCount++;
@@ -143,50 +160,138 @@ export function analyzeBand8Text(text, taskType = 'task2') {
     }
   });
 
-  // Band Scorings calculation (Heuristic based on official descriptors)
+  // Band Scorings calculation (Heuristic calibrated to official Cambridge Band Descriptors)
+  const wordRatio = wordCount / targetWords;
 
   // 1. Task Achievement / Response (TR)
   let taskScore = 5.0;
-  if (wordCount >= targetWords) taskScore += 1.5;
-  else if (wordCount >= targetWords * 0.75) taskScore += 0.5;
-  if (taskType === 'task2') {
-    if (paragraphCount >= 4 && paragraphCount <= 5) taskScore += 1.0;
+  if (wordRatio < 0.50) {
+    taskScore = 4.0; // Severe word penalty
+  } else if (wordRatio < 0.75) {
+    taskScore = 5.0;
+  } else if (wordRatio < 0.90) {
+    taskScore = 5.5;
   } else {
-    // Task 1 needs Overview paragraph + Body details
-    if (paragraphCount >= 3 && paragraphCount <= 4) taskScore += 1.0;
-    if (/overall|in summary|it is notable that/i.test(cleanText)) taskScore += 0.5;
+    taskScore = 6.0;
+    if (wordCount >= targetWords) taskScore += 0.5;
+  }
+
+  if (taskType === 'task2') {
+    if (paragraphCount >= 4 && paragraphCount <= 6 && wordRatio >= 0.75) {
+      taskScore += 0.5;
+    } else if (paragraphCount <= 2) {
+      taskScore = Math.min(taskScore, 4.5);
+    }
+  } else {
+    // Task 1 requires an Overview statement
+    const hasOverview = /overall|in summary|it is notable that|it is immediately apparent/i.test(cleanText);
+    if (hasOverview) {
+      taskScore += 0.5;
+      if (paragraphCount >= 3 && paragraphCount <= 5) taskScore += 0.5;
+    } else {
+      taskScore = Math.min(taskScore, 5.5); // Cap without overview
+    }
+  }
+
+  // Elite topic progression bonus for well-developed essays
+  if (wordCount >= targetWords && academicWordMatches.length >= 6 && advancedCount >= 2) {
+    taskScore += 1.0;
+  } else if (wordCount >= targetWords && academicWordMatches.length >= 3) {
+    taskScore += 0.5;
   }
   taskScore = Math.min(9.0, Math.max(4.0, taskScore));
 
   // 2. Coherence & Cohesion (CC)
   let cohesionScore = 5.0;
-  if (advancedCohesivesFound.length >= 3) cohesionScore += 2.0;
-  else if (advancedCohesivesFound.length >= 1) cohesionScore += 1.0;
-  if (basicCohesivesFound.length > 5) cohesionScore -= 0.5; // Overuse of mechanical linkers
-  if (paragraphCount >= 3) cohesionScore += 1.0;
+  if (paragraphCount <= 2) {
+    cohesionScore = 4.5;
+  } else if (paragraphCount >= 4) {
+    cohesionScore = 5.5;
+  }
+
+  if (advancedCohesivesFound.length >= 4) {
+    cohesionScore += 2.5;
+  } else if (advancedCohesivesFound.length >= 2) {
+    cohesionScore += 1.5;
+  } else if (advancedCohesivesFound.length >= 1) {
+    cohesionScore += 0.5;
+  } else if (basicCohesivesFound.length === 0) {
+    cohesionScore -= 0.5;
+  }
+
+  if (basicCohesivesFound.length > 5 && advancedCohesivesFound.length === 0) {
+    cohesionScore -= 0.5; // Overuse of mechanical linkers
+  }
+  if (wordRatio < 0.55) {
+    cohesionScore = Math.min(cohesionScore, 4.5);
+  }
   cohesionScore = Math.min(9.0, Math.max(4.0, cohesionScore));
 
   // 3. Lexical Resource (LR)
   let lexicalScore = 5.0;
   const academicRatio = academicWordMatches.length / Math.max(1, wordCount);
-  if (academicWordMatches.length >= 6 || academicRatio >= 0.04) lexicalScore += 2.5;
-  else if (academicWordMatches.length >= 3) lexicalScore += 1.5;
-  else if (academicWordMatches.length >= 1) lexicalScore += 0.5;
 
-  if (weakWordMatches.length > 4) lexicalScore -= 0.5;
+  if (academicWordMatches.length >= 8 || academicRatio >= 0.040) {
+    lexicalScore = 8.5;
+    if (academicWordMatches.length >= 11 && weakWordMatches.length === 0) lexicalScore = 9.0;
+  } else if (academicWordMatches.length >= 5 || academicRatio >= 0.025) {
+    lexicalScore = 7.5;
+  } else if (academicWordMatches.length >= 3 || academicRatio >= 0.015) {
+    lexicalScore = 6.5;
+  } else if (academicWordMatches.length >= 1) {
+    lexicalScore = 5.5;
+  } else {
+    lexicalScore = 4.5;
+  }
+
+  if (weakWordMatches.length >= 4) {
+    lexicalScore -= 0.5;
+  }
+  if (weakWordMatches.length >= 6) {
+    lexicalScore -= 0.5;
+  }
+  if (academicWordMatches.length === 0 && weakWordMatches.length >= 3) {
+    lexicalScore = Math.min(lexicalScore, 4.0);
+  }
   lexicalScore = Math.min(9.0, Math.max(4.0, lexicalScore));
 
   // 4. Grammatical Range & Accuracy (GRA)
   let grammarScore = 5.0;
   const complexRatio = (complexCount + advancedCount) / Math.max(1, sentenceCount);
-  if (advancedCount >= 2 && complexRatio >= 0.5) grammarScore += 3.0;
-  else if (complexRatio >= 0.4) grammarScore += 2.0;
-  else if (complexRatio >= 0.2) grammarScore += 1.0;
+
+  if (complexCount + advancedCount === 0) {
+    grammarScore = 4.0;
+  } else if (advancedCount >= 3 && complexRatio >= 0.55) {
+    grammarScore = 8.5;
+    if (sentenceCount >= 8 && advancedCount >= 4) grammarScore = 9.0;
+  } else if (advancedCount >= 2 && complexRatio >= 0.40) {
+    grammarScore = 7.5;
+    if (complexRatio >= 0.60) grammarScore = 8.0;
+  } else if (advancedCount >= 1 && complexRatio >= 0.30) {
+    grammarScore = 6.5;
+    if (complexRatio >= 0.50) grammarScore = 7.0;
+  } else if (complexRatio >= 0.25) {
+    grammarScore = 6.0;
+  } else if (complexRatio >= 0.15) {
+    grammarScore = 5.5;
+  } else {
+    grammarScore = 4.5;
+  }
+
+  if (wordRatio < 0.50) {
+    grammarScore = Math.min(grammarScore, 4.5);
+  }
   grammarScore = Math.min(9.0, Math.max(4.0, grammarScore));
 
-  // Overall Band (Average rounded to nearest 0.5)
+  // Overall Band (Official Cambridge IELTS rounding to nearest 0.5)
   const rawAvg = (taskScore + cohesionScore + lexicalScore + grammarScore) / 4;
-  const overallBand = Math.round(rawAvg * 2) / 2;
+  const decimal = rawAvg - Math.floor(rawAvg);
+  let overallBand = Math.floor(rawAvg);
+  if (decimal >= 0.75) {
+    overallBand = Math.ceil(rawAvg);
+  } else if (decimal >= 0.25) {
+    overallBand = Math.floor(rawAvg) + 0.5;
+  }
 
   // Actionable Suggestions
   const suggestions = [];

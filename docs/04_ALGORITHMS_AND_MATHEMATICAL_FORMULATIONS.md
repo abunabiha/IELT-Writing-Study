@@ -117,3 +117,52 @@ Tingkatan belajar dihitung berdasarkan kurva akumulasi linier terkuantisasi:
 $$\text{Level}(XP) = \left\lfloor \frac{XP}{500} \right\rfloor + 1$$
 
 $$\text{Progress}(XP) = \frac{XP \pmod{500}}{500} \times 100\%$$
+
+---
+
+## 5. Formulasi Evaluasi Validitas Model AI & Automated Essay Scoring (AES)
+
+Untuk memvalidasi mesin penilai esai otomatis terhadap standar penilaian penguji manusia (*Certified IELTS Senior Examiners*), sistem menerapkan 6 formulasi psikometri dan statistik komputasional:
+
+### 5.1. Mean Absolute Error (MAE)
+Mengukur rata-rata magnitudo kesalahan prediksi tanpa mempertimbangkan arah deviasi:
+
+$$\text{MAE} = \frac{1}{N} \sum_{i=1}^{N} \left| \hat{y}_i - y_i \right|$$
+
+Di mana $y_i$ adalah skor acuan penguji manusia, $\hat{y}_i$ adalah skor estimasi model AI, dan $N = 20$ adalah ukuran sampel korpus uji.
+
+### 5.2. Root Mean Squared Error (RMSE)
+Mengukur deviasi kuadratis rata-rata untuk memberikan penalti proporsional terhadap *outlier error*:
+
+$$\text{RMSE} = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (\hat{y}_i - y_i)^2}$$
+
+### 5.3. Koefisien Korelasi Pearson ($r$)
+Mengukur kovarian terstandardisasi antara skor model AI dan skor manusia:
+
+$$r = \frac{\sum_{i=1}^{N} (y_i - \bar{y})(\hat{y}_i - \bar{\hat{y}})}{\sqrt{\sum_{i=1}^{N} (y_i - \bar{y})^2} \sqrt{\sum_{i=1}^{N} (\hat{y}_i - \bar{\hat{y}})^2}}$$
+
+### 5.4. Koefisien Korelasi Peringkat Spearman ($\rho$)
+Mengukur keselarasan monotonik peringkat mutu esai:
+
+$$\rho = 1 - \frac{6 \sum_{i=1}^{N} d_i^2}{N(N^2 - 1)}$$
+
+di mana $d_i = \text{Rank}(y_i) - \text{Rank}(\hat{y}_i)$.
+
+### 5.5. Tingkat Kesepakatan Berdampingan (Adjacent Agreement $\pm 0.5$ Band)
+Persentase naskah esai yang dievaluasi dalam selisih toleransi maksimal setengah band:
+
+$$\text{Adjacent Agreement} = \frac{1}{N} \sum_{i=1}^{N} \mathbb{I}\left( \left| \hat{y}_i - y_i \right| \le 0.5 \right) \times 100\%$$
+
+di mana $\mathbb{I}(\cdot)$ adalah fungsi indikator biner.
+
+### 5.6. Quadratic Weighted Kappa (QWK)
+Formulasi standar emas kompetisi AES internasional (Kaggle/ETS) dengan penalti berbobot kuadratik:
+
+$$\kappa = 1 - \frac{\sum_{i=1}^{K} \sum_{j=1}^{K} w_{ij} O_{ij}}{\sum_{i=1}^{K} \sum_{j=1}^{K} w_{ij} E_{ij}}$$
+
+Matriks bobot kuadratik didefinisikan sebagai:
+
+$$w_{ij} = \frac{(i - j)^2}{(K - 1)^2}$$
+
+dengan $K = 11$ kategori diskrit interval band ($4.0, 4.5, 5.0, \dots, 9.0$), $O_{ij}$ adalah frekuensi pengamatan di mana penguji manusia memberi kategori $i$ dan model AI memberi kategori $j$, serta $E_{ij} = \frac{R_i \cdot C_j}{N}$ adalah ekspektasi distribusi acak marginal.
+
